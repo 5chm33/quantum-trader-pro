@@ -1,6 +1,6 @@
 # Quantum Trader Pro Architecture Reference
 
-Quantum Trader Pro is a finite, deterministic simulation pipeline. Its architecture separates pure trading-domain logic from data acquisition, execution, and persistence so no strategy or portfolio component can reach a network broker directly.
+Quantum Trader Pro is a finite, deterministic simulation pipeline with a separately isolated, disabled-by-default paper-broker boundary. Its architecture separates pure trading-domain logic from data acquisition, execution, reconciliation, and persistence so no strategy or portfolio component can reach a network broker directly.
 
 ![System architecture](docs/assets/system_architecture.png)
 
@@ -8,7 +8,7 @@ Quantum Trader Pro is a finite, deterministic simulation pipeline. Its architect
 
 | Goal | Architectural response |
 |---|---|
-| Prevent accidental capital deployment | The execution policy represents only `simulation`; paper and live strings are rejected before adapter construction |
+| Prevent accidental capital deployment | Every public command remains simulation-only; the separate paper adapter is pinned to Alpaca’s paper origin and requires an unavailable operator arming path, while live execution is unrepresentable |
 | Make results reproducible | Input bytes are checksummed, clocks are injected, identifiers are content-derived, event order is stable, and reports use canonical values |
 | Keep accounting inspectable | Cash, positions, average cost, fees, realized P&L, unrealized P&L, and equity reconcile at every observation |
 | Model causality honestly | An intent generated from event *t* can fill only on a later eligible event |
@@ -21,9 +21,9 @@ Quantum Trader Pro is a finite, deterministic simulation pipeline. Its architect
 | Package | Owns | Must not own |
 |---|---|---|
 | `domain` | Immutable value objects, portfolio aggregate, risk policy, strategy, and clocks | Filesystem, SQLite, networking, CLI parsing |
-| `application` | Engine orchestration, lifecycle lock, metrics, and report generation | Broker-specific SDK calls or hidden global state |
-| `ports` | Structural interfaces for market data, broker, and event storage | Concrete implementation logic |
-| `adapters` | CSV replay, deterministic simulated fills, and SQLite persistence | Strategy decisions or risk policy |
+| `application` | Engine orchestration, lifecycle lock, metrics, reporting, and normalized reconciliation | Broker-specific HTTP calls or hidden global state |
+| `ports` | Structural interfaces for market data, simulation broker, external broker, event storage, and broker journal | Concrete implementation logic |
+| `adapters` | CSV replay, deterministic simulated fills, fixed-origin paper HTTP, and SQLite persistence | Strategy decisions or risk policy |
 | `cli` | Explicit configuration, dependency assembly, output protection, and preflight | Trading logic or direct broker access |
 
 The package uses dependency injection rather than singleton registries. The engine receives fully constructed port implementations and domain services; replacing an adapter does not alter the strategy contract.
@@ -47,6 +47,12 @@ The package uses dependency injection rather than singleton registries. The engi
 | 13 | Queue an approved order for a later event | `order_accepted` |
 | 14 | Cancel any still-pending orders and mark remaining positions to the final close | `order_canceled_end_of_test` when needed |
 | 15 | End with a final reconciled portfolio and six-artifact report bundle | `run_completed` plus output artifacts |
+
+## Paper State and Reconciliation Sequence
+
+The paper components are not reachable from the CLI, but their internal startup contract is explicit and tested. The reconciler first verifies the mode-`0600`, full-sync SQLite journal with `PRAGMA integrity_check`, then reads the paper account, positions, open orders, unresolved local submissions, and paginated fill activities. Deterministic client IDs resolve ambiguous submissions before any future retry. Fill activities are assigned to their referenced broker orders, inserted exactly once by execution ID, and used to project strategy-owned positions. Foreign orders, unexplained bot-namespace orders, missing activity ownership, unknown broker states, account restrictions, stalled pagination, and position mismatches all produce a non-ready report.
+
+A reconciliation commit atomically records the account snapshot, latest order projections, complete position snapshot, new fills, resolved submissions, activity checkpoint, and redacted mismatch report. The checkpoint advances only in the same transaction as the retained activities. A repeated run is idempotent; the one permitted duplicate evolution enriches a previously unresolved fill with its broker-resolved client order ID while requiring every economic and identity field to remain unchanged.
 
 ## Core Invariants
 
@@ -95,9 +101,9 @@ The engine is finite: it processes a bounded local input and exits. The systemd 
 
 ## Extension Rules
 
-A new strategy must implement the `Strategy` protocol and return only a target fraction plus rationale; it must not submit orders. A new data adapter must emit strictly increasing, timezone-aware `MarketEvent` values with source provenance. A new broker adapter must preserve intent/decision ID matching, idempotency, next-event causality, explicit fees, and reconciliation.
+A new strategy must implement the `Strategy` protocol and return only a target fraction plus rationale; it must not submit orders. A new data adapter must emit strictly increasing, timezone-aware `MarketEvent` values with source provenance. A new external broker adapter must preserve deterministic client identity, pre-submit durability, no-blind-retry behavior, per-object payload hashes, pagination, normalized states, and reconciliation.
 
-A paper-broker adapter would require a separate threat model, credential loader, broker sandbox account, idempotent client order IDs, order-status reconciliation, outage and rate-limit handling, contract tests, and a disabled-by-default build path. A live-broker adapter is intentionally outside this repository.
+The current Alpaca adapter is paper-origin-only and has no operator command. Enabling an authenticated paper command still requires a secure credential source, market/session and stale-data controls, kill switches, outage/rate-limit handling, crash and partial-fill drills, and a commit-bound acceptance record. A live-broker adapter remains intentionally unavailable.
 
 ## References
 

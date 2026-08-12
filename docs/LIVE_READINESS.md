@@ -28,12 +28,13 @@ The repository now models `simulation`, `paper`, and `live` as explicit identiti
 | Paper arming record | Implemented | Expiry, acknowledgment, fingerprint, namespace, and preflight matrix tests |
 | Normalized account/clock/order/fill/activity contracts | Implemented | Validation and transition-state unit tests |
 | Deterministic client order ID | Implemented | Stable namespace/account/intent identity tests |
-| Durable submission-journal contract | Implemented | Persisted/acknowledged/ambiguous/reconciled state invariants |
+| Durable submission journal | Implemented | Mode-`0600` SQLite journal, full-sync durability, pre-submit idempotency, validated transitions, duplicate conflict detection, and integrity checks |
+| Full-state reconciliation | Implemented but not operator-enabled | Account fingerprint/status, open orders, positions, paginated fills, client-ID ownership, unresolved submissions, execution deduplication, atomic projections, and checkpoint commit |
 | Alpaca paper adapter | Implemented but not operator-enabled | Fixed `https://paper-api.alpaca.markets` origin, injectable HTTPS transport, normalized reads, one-submit idempotency, client-ID timeout recovery, verified cancellation, and activity pagination |
 | Paper credentials and command | **Not yet enabled** | No repository command loads credentials or submits an external order; authenticated paper acceptance evidence is still absent |
 | Live execution | **Unavailable** | Gate and preflight report explicitly reject live execution; the adapter rejects the live origin |
 
-This status is intentionally narrower than “paper-ready.” The next phases must implement durable journal storage, complete account/order/fill/position reconciliation, market/session controls, kill switches, secret acquisition, and failure-injection evidence before a paper command can exist. The current adapter is exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted.
+This status is intentionally narrower than “paper-ready.” Durable journal storage and full-state REST reconciliation are now implemented and tested, including foreign-order, position-drift, stalled-pagination, duplicate-fill, and missing-ownership failures. The next phases must add market/session controls, kill switches, secret acquisition, crash/failure-injection evidence, and authenticated paper acceptance before a paper command can exist. The current adapter remains exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted.
 
 ## Non-Negotiable Invariants
 

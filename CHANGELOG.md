@@ -18,7 +18,9 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Normalized broker account, clock, position, approved-order, order-state, fill-activity, pagination, cancellation, and durable submission-journal contracts.
 - Deterministic broker-safe client order IDs and a fail-closed transition validator covering duplicate updates, partial fills, cancel races, terminal states, and out-of-order regressions.
 - Fixed-origin Alpaca paper adapter with standard-library HTTPS transport, normalized account/clock/position/order/activity reads, deterministic one-submit behavior, client-ID timeout recovery, verified cancellation outcomes, and official activity pagination.
-- Redacted paper credentials and HTTP errors, strict sandbox-origin/path allowlisting, canonical request bodies, lowercase boolean query encoding, and raw response hashes.
+- Redacted paper credentials and HTTP errors, strict sandbox-origin/path allowlisting, canonical request bodies, lowercase boolean query encoding, and stable per-object response hashes.
+- Mode-`0600`, full-sync SQLite broker journal with pre-submit idempotency, validated submission transitions, duplicate-content conflict detection, atomic broker projections, activity checkpoints, and integrity checks.
+- Full-state paper reconciler for account identity/status, unresolved submissions, open-order ownership, paginated fills, fill-to-order ownership, duplicate executions, expected positions, broker positions, foreign state, and stalled pagination.
 
 ### Changed
 
@@ -31,7 +33,7 @@ All notable changes to Quantum Trader Pro are documented in this file.
 
 ### Validation
 
-- Expanded the local suite to 81 passing tests with 90.21% branch coverage after the fixed-sandbox paper-adapter phase.
+- Expanded the local suite to 88 passing tests with 90.36% branch coverage after the durable reconciliation phase.
 - Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
 - Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
 - Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.

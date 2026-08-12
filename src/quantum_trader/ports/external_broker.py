@@ -47,6 +47,9 @@ class ExternalBroker(Protocol):
     def get_order_by_client_id(self, client_order_id: str) -> BrokerOrderSnapshot | None:
         """Resolve ambiguous submissions by deterministic client ID before retrying."""
 
+    def get_order_by_id(self, broker_order_id: str) -> BrokerOrderSnapshot | None:
+        """Resolve activity ownership and terminal state by broker order ID."""
+
     def submit_once(
         self,
         *,

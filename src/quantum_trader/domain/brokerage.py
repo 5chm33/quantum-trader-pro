@@ -95,6 +95,22 @@ def _sha256(value: str, field_name: str) -> None:
         raise ValueError(f"{field_name} must be a lowercase SHA-256 digest")
 
 
+def owned_client_order_prefix(strategy_namespace: str) -> str:
+    """Return the conservative broker-safe prefix for one strategy namespace."""
+
+    namespace = strategy_namespace.strip().lower()
+    if not namespace or not namespace.replace("-", "").replace("_", "").isalnum():
+        raise ValueError("strategy_namespace has invalid characters")
+    normalized = re.sub(r"[^a-z0-9_-]", "-", namespace)[:12]
+    return f"qt-{normalized}-"
+
+
+def is_owned_client_order_id(client_order_id: str, strategy_namespace: str) -> bool:
+    """Return whether a broker order belongs to the configured deterministic namespace."""
+
+    return client_order_id.startswith(owned_client_order_prefix(strategy_namespace))
+
+
 def deterministic_client_order_id(
     *,
     strategy_namespace: str,
@@ -108,8 +124,7 @@ def deterministic_client_order_id(
     if approved_quantity <= 0:
         raise ValueError("approved_quantity must be positive")
     namespace = strategy_namespace.strip().lower()
-    if not namespace or not namespace.replace("-", "").replace("_", "").isalnum():
-        raise ValueError("strategy_namespace has invalid characters")
+    prefix = owned_client_order_prefix(namespace)
     digest = hashlib.sha256(
         "\x1f".join(
             (
@@ -126,8 +141,7 @@ def deterministic_client_order_id(
             )
         ).encode("utf-8")
     ).hexdigest()[:24]
-    prefix = re.sub(r"[^a-z0-9_-]", "-", namespace)[:12]
-    client_order_id = f"qt-{prefix}-{digest}"
+    client_order_id = f"{prefix}{digest}"
     if not OWNED_CLIENT_ORDER_ID_PATTERN.fullmatch(client_order_id):
         raise ValueError("derived client_order_id violates the broker-safe format")
     return client_order_id

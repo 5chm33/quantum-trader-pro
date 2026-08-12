@@ -296,7 +296,7 @@ class AlpacaPaperBroker:
             expected=(200,),
         )
         return tuple(
-            self._normalize_order(_mapping(item, "order"), response.raw_payload_sha256)
+            self._normalize_order(_mapping(item, "order"))
             for item in _sequence(response.payload, "orders")
         )
 
@@ -310,10 +310,7 @@ class AlpacaPaperBroker:
         if response.status_code == 404:
             return None
         self._require_status(response, (200,))
-        return self._normalize_order(
-            _mapping(response.payload, "order"),
-            response.raw_payload_sha256,
-        )
+        return self._normalize_order(_mapping(response.payload, "order"))
 
     def submit_once(
         self,
@@ -350,10 +347,7 @@ class AlpacaPaperBroker:
             self._require_order_identity(recovered, order)
             return recovered
         self._require_status(response, (200,))
-        snapshot = self._normalize_order(
-            _mapping(response.payload, "order"),
-            response.raw_payload_sha256,
-        )
+        snapshot = self._normalize_order(_mapping(response.payload, "order"))
         self._require_order_identity(snapshot, order)
         return snapshot
 
@@ -377,7 +371,7 @@ class AlpacaPaperBroker:
                 self._require_status(response, (200, 204, 404))
         except AmbiguousPaperRequest:
             accepted = False
-        observed = self._get_order_by_id(broker_order_id)
+        observed = self.get_order_by_id(broker_order_id)
         return BrokerCancelResult(
             broker_order_id=broker_order_id,
             requested_at=self._timestamp(),
@@ -416,11 +410,7 @@ class AlpacaPaperBroker:
         )
         payloads = _sequence(response.payload, "fill activities")
         activities = tuple(
-            self._normalize_fill_activity(
-                _mapping(item, "fill activity"),
-                response.raw_payload_sha256,
-            )
-            for item in payloads
+            self._normalize_fill_activity(_mapping(item, "fill activity")) for item in payloads
         )
         next_page_token = activities[-1].activity_id if len(activities) == page_size else None
         return BrokerActivityPage(
@@ -471,7 +461,9 @@ class AlpacaPaperBroker:
             payload["limit_price"] = str(order.limit_price)
         return payload
 
-    def _get_order_by_id(self, broker_order_id: str) -> BrokerOrderSnapshot | None:
+    def get_order_by_id(self, broker_order_id: str) -> BrokerOrderSnapshot | None:
+        if not broker_order_id:
+            raise AlpacaPaperConfigurationError("broker_order_id must not be empty")
         response = self._transport.request(
             method="GET",
             path=f"/v2/orders/{quote(broker_order_id, safe='')}",
@@ -479,10 +471,7 @@ class AlpacaPaperBroker:
         if response.status_code == 404:
             return None
         self._require_status(response, (200,))
-        return self._normalize_order(
-            _mapping(response.payload, "order"),
-            response.raw_payload_sha256,
-        )
+        return self._normalize_order(_mapping(response.payload, "order"))
 
     @staticmethod
     def _require_order_identity(
@@ -497,10 +486,7 @@ class AlpacaPaperBroker:
             raise AlpacaPaperResponseError("broker response quantity does not match")
 
     @staticmethod
-    def _normalize_order(
-        payload: Mapping[str, object],
-        raw_payload_sha256: str,
-    ) -> BrokerOrderSnapshot:
+    def _normalize_order(payload: Mapping[str, object]) -> BrokerOrderSnapshot:
         quantity = _required_decimal(payload, "qty")
         filled_quantity = _required_decimal(payload, "filled_qty")
         average_fill_price = _optional_decimal(payload, "filled_avg_price")
@@ -517,13 +503,12 @@ class AlpacaPaperBroker:
             average_fill_price=average_fill_price,
             submitted_at=submitted_at,
             updated_at=updated_at,
-            raw_payload_sha256=raw_payload_sha256,
+            raw_payload_sha256=_raw_payload_hash(payload),
         )
 
     @staticmethod
     def _normalize_fill_activity(
         payload: Mapping[str, object],
-        raw_payload_sha256: str,
     ) -> BrokerFillActivity:
         activity_id = _required_string(payload, "id")
         return BrokerFillActivity(
@@ -537,8 +522,18 @@ class AlpacaPaperBroker:
             price=_required_decimal(payload, "price"),
             fee=None,
             timestamp=_required_datetime(payload, "transaction_time"),
-            raw_payload_sha256=raw_payload_sha256,
+            raw_payload_sha256=_raw_payload_hash(payload),
         )
+
+
+def _raw_payload_hash(payload: Mapping[str, object]) -> str:
+    encoded = json.dumps(
+        dict(payload),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _system_now() -> datetime:
