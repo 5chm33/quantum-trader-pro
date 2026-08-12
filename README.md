@@ -40,7 +40,7 @@ The repository intentionally contains **no paper- or live-broker adapter**. The 
 
 ## Evaluation Card
 
-> **v0.1.0 baseline note:** This retained result is an earlier transparent engineering validation, not a tuned strategy result, authenticated live performance, or a guarantee of future returns. Its benchmark is an **unadjusted price return** with dividends excluded. The A+ branch now refuses to treat that price-only series as a headline total-return benchmark and is replacing this card through a preregistered evaluation workflow.
+> **v0.1.0 baseline note:** This retained result is an earlier transparent engineering validation, not a tuned strategy result, authenticated live performance, or a guarantee of future returns. Its benchmark is an **unadjusted price return** with dividends excluded. The A+ branch now refuses to treat that price-only series as a headline total-return benchmark and is replacing this card through the frozen [`evaluation/protocol_v1.json`](evaluation/protocol_v1.json) and its readable [`research protocol`](docs/RESEARCH_PROTOCOL.md).
 
 The clean engine was evaluated on 1,255 daily SPY OHLCV observations spanning August 12, 2021 through August 12, 2026. The observations were obtained through the Yahoo Finance chart-data interface; Yahoo’s public historical page exposes Open, High, Low, Close, Adjusted Close, and Volume and explains its price-adjustment conventions.[1] Nasdaq independently identifies SPY as the State Street SPDR S&P 500 ETF Trust and provides a historical-data interface.[2]
 
