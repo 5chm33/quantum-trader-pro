@@ -25,6 +25,10 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - One fail-closed pre-trade controller requiring fresh reconciliation, account, position, asset, clock, calendar, and quote state before any future paper submission.
 - Regular-hours-only policy, spread and order-policy validation, broker buying-power reservation, open-order commitment, gross/symbol exposure, cash-reserve, sell-quantity, rolling order-rate, per-session order-count, and future-timestamp controls.
 - Thread-safe local API request budgets defaulting to 120 requests per minute with a hard 180/minute ceiling below the documented 200/minute broker-account throttle.
+- Strict out-of-band paper credential loading with absolute paths, no symlinks, service-user ownership, mode `0600` files, bounded reads, one-line text validation, minimum 256-bit operator keys, and fully redacted representations.
+- Mode-`0600`, full-sync operator-control store that starts paused, records only reason hashes, and rejects approval replay or concurrent actions.
+- Action-specific, expiring, one-use HMAC approvals bound to paper mode, namespace, code, configuration, account, nonce, acknowledgment, and exact action.
+- Reconciliation-bound resume gate and pause-first cancel kill switch that touches only deterministic bot-owned paper orders, verifies terminal and residual state, reconciles, and remains paused.
 
 ### Changed
 
@@ -33,11 +37,11 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Made the single-instance lock native on both Windows and POSIX.
 - Updated GitHub Actions to validate source, installed wheel, and one-click wrappers on Windows, macOS, and Linux.
 - Replaced the obsolete single-SPY headline evaluation with the preregistered six-asset negative result while retaining v0.1.0 as historical engineering evidence.
-- Kept every existing replay and one-click command simulation-only; the paper adapter is not operator-enabled, its configured external preflight remains unauthenticated, and the live gate always rejects.
+- Kept every existing replay and one-click command simulation-only; strict credentials and operator actions remain internal-only, flattening is unavailable, the configured external preflight remains unauthenticated, and the live gate always rejects.
 
 ### Validation
 
-- Expanded the local suite to 119 passing tests with 91.08% branch coverage after the market and portfolio control phase.
+- Expanded the local suite to 140 passing tests with 90.73% branch coverage after the operator-control and secret-isolation phase.
 - Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
 - Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
 - Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.

@@ -17,9 +17,11 @@ from quantum_trader.domain.market_controls import (
     PaperPreTradeState,
     evaluate_paper_pretrade,
 )
+from quantum_trader.domain.operator import OperatorControlState
 from quantum_trader.ports.broker_journal import BrokerJournal
 from quantum_trader.ports.control_data import PaperControlData
 from quantum_trader.ports.external_broker import ExternalBroker
+from quantum_trader.ports.operator_control import OperatorControlReader
 
 ZERO = Decimal("0")
 
@@ -35,12 +37,18 @@ class ReconciliationService(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class PaperPreTradeAssessment:
-    reconciliation: ReconciliationReport
+    reconciliation: ReconciliationReport | None
+    operator_state: OperatorControlState
     decision: PaperControlDecision
 
     @property
     def ready(self) -> bool:
-        return self.reconciliation.ready and self.decision.allowed
+        return (
+            not self.operator_state.paused
+            and self.reconciliation is not None
+            and self.reconciliation.ready
+            and self.decision.allowed
+        )
 
 
 class PaperPreTradeController:
@@ -53,6 +61,7 @@ class PaperPreTradeController:
         journal: BrokerJournal,
         control_data: PaperControlData,
         reconciler: ReconciliationService,
+        operator_control: OperatorControlReader,
         strategy_namespace: str,
         limits: PaperControlLimits,
     ) -> None:
@@ -69,6 +78,7 @@ class PaperPreTradeController:
         self._journal = journal
         self._control_data = control_data
         self._reconciler = reconciler
+        self._operator_control = operator_control
         self._strategy_namespace = namespace
         self._limits = limits
         self._eastern = eastern
@@ -80,10 +90,18 @@ class PaperPreTradeController:
         timestamp: datetime,
     ) -> PaperPreTradeAssessment:
         _aware(timestamp)
+        operator_state = self._operator_control.current_state()
+        if operator_state.paused:
+            return PaperPreTradeAssessment(
+                reconciliation=None,
+                operator_state=operator_state,
+                decision=_denied("operator_paused"),
+            )
         reconciliation = self._reconciler.reconcile(timestamp=timestamp)
         if not reconciliation.ready:
             return PaperPreTradeAssessment(
                 reconciliation=reconciliation,
+                operator_state=operator_state,
                 decision=_denied("reconciliation_not_ready"),
             )
         if reconciliation.account_sha256 != self._broker.account_sha256:
@@ -100,6 +118,7 @@ class PaperPreTradeController:
         if calendar is None:
             return PaperPreTradeAssessment(
                 reconciliation=reconciliation,
+                operator_state=operator_state,
                 decision=_denied("market_calendar_unavailable"),
             )
         asset = self._control_data.get_asset(order.symbol)
@@ -124,6 +143,7 @@ class PaperPreTradeController:
         )
         return PaperPreTradeAssessment(
             reconciliation=reconciliation,
+            operator_state=operator_state,
             decision=decision,
         )
 

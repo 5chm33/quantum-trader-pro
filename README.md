@@ -7,8 +7,8 @@
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
-[![Tests](https://img.shields.io/badge/tests-119%20passing-brightgreen)](tests)
-[![Coverage](https://img.shields.io/badge/coverage-91.08%25-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-140%20passing-brightgreen)](tests)
+[![Coverage](https://img.shields.io/badge/coverage-90.73%25-brightgreen)](tests)
 [![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A--blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
 [![Execution](https://img.shields.io/badge/execution-simulation%20only-blueviolet)](SAFETY.md)
@@ -22,7 +22,7 @@
 
 Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and append-only event recording. Every generated report is derived from the same ordered observations and declares its fees, slippage, conservative execution buffer, benchmark availability, end-of-test policy, and fill methodology.
 
-The repository now contains a **fixed-sandbox Alpaca paper adapter, mode-`0600` transactional submission journal, full-state reconciler, and fail-closed pre-trade control service**, but none is exposed through an operator command. The implementation covers expiring paper-only arming, deterministic client IDs, pre-submit durability, one-submit idempotency, verified cancellation, paginated fill ownership, atomic checkpoints, regular-session and early-close validation, fresh account/position/asset/quote requirements, crossed and wide-spread rejection, broker buying-power and open-order commitment, portfolio exposure and cash reserves, durable order bursts, and conservative API request budgets. Every executable command still accepts only `simulation`; no credential loader or authenticated paper acceptance record exists, and the live gate always rejects. This remains a portfolio and research-engineering project, not an autonomous capital-deployment system.
+The repository now contains a **fixed-sandbox Alpaca paper adapter, transactional journals, full-state reconciler, fail-closed pre-trade controls, strict out-of-band credential loader, and default-paused operator-control store**, but none is exposed through an operator command. One-use HMAC approvals bind resume and cancel actions to the exact code, configuration, account, namespace, action, nonce, and expiry. The cancel kill switch pauses first, touches only deterministic bot-owned paper orders, verifies terminal and residual state, reconciles, and remains paused. Every executable command still accepts only `simulation`; authenticated paper acceptance and position flattening remain absent, and the live gate always rejects. This remains a portfolio and research-engineering project, not an autonomous capital-deployment system.
 
 | Capability | Implementation |
 |---|---|
@@ -35,7 +35,7 @@ The repository now contains a **fixed-sandbox Alpaca paper adapter, mode-`0600` 
 | Auditability | Ordered SQLite event ledger with canonical JSON payload hashes |
 | Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with total-return-proxy availability, price diagnostics, exposure, turnover, drawdown, expectancy, and risk state |
 | Process safety | Single-instance lock and explicit output-overwrite protection |
-| Broker boundary | Expiring paper-only arming; fixed paper origin; transactional journal; full reconciliation; real-time IEX/SIP quote and bounded calendar reads; session, freshness, spread, asset, buying-power, exposure, cash, order-rate, and API-request controls; no operator-enabled paper command and no live adapter |
+| Broker boundary | Expiring paper arming; fixed paper origin; transactional journals; reconciliation; market and portfolio gates; strict credential files; default pause; one-use resume/cancel approvals; owned-orders-only verified cancel; no operator-enabled paper command, flatten service, or live adapter |
 
 ---
 
@@ -72,7 +72,7 @@ The complete public evidence bundle includes all **2,016 validation trials**, **
 
 The architecture uses ports and adapters so market data, brokerage, and persistence remain outside the domain model. The strategy never calls a broker directly. The engine records the market event, reconciles existing fills, marks the portfolio, evaluates circuit breakers, generates a signal, translates it into an intent, applies risk policy, and only then hands an approved order to the simulated broker.
 
-The current implementation is deliberately finite rather than an always-on market daemon. A system service can schedule or launch a simulation job, but there is no credential path, production endpoint, or live order route. See [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SAFETY.md`](SAFETY.md), and [`THREAT_MODEL.md`](THREAT_MODEL.md) for the current design boundary. The in-progress A+ expansion is governed by [`docs/LIVE_READINESS.md`](docs/LIVE_READINESS.md) and [`docs/BROKER_THREAT_MODEL.md`](docs/BROKER_THREAT_MODEL.md); [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the hardened cloud-computer installation.
+The current implementation is deliberately finite rather than an always-on market daemon. A system service can schedule or launch a simulation job; paper credentials can now be loaded only from strict out-of-band files, but no public command consumes them or submits an order. See [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SAFETY.md`](SAFETY.md), and [`THREAT_MODEL.md`](THREAT_MODEL.md) for the current design boundary. The in-progress A+ expansion is governed by [`docs/LIVE_READINESS.md`](docs/LIVE_READINESS.md), [`docs/OPERATOR_CONTROLS.md`](docs/OPERATOR_CONTROLS.md), and [`docs/BROKER_THREAT_MODEL.md`](docs/BROKER_THREAT_MODEL.md); [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the hardened simulation installation.
 
 ---
 
@@ -143,7 +143,7 @@ bandit -q -r src
 python -m build
 ```
 
-The current validated baseline is **42 passing tests**, **92.14% statement/branch coverage**, no strict-type errors, no Ruff findings, and no Bandit findings.
+The current feature branch is **140 passing tests**, **90.73% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. Protected CI repeats the quality gate on Python 3.11 and 3.12 and validates one-click launchers on Linux, macOS, and Windows.
 
 ---
 
@@ -151,10 +151,10 @@ The current validated baseline is **42 passing tests**, **92.14% statement/branc
 
 | Path | Responsibility |
 |---|---|
-| `src/quantum_trader/domain/` | Immutable models, strategy, risk policy, portfolio accounting, and clocks |
-| `src/quantum_trader/application/` | Orchestration, lifecycle lock, metrics, and report generation |
-| `src/quantum_trader/ports/` | Broker, market-data, and event-store interfaces |
-| `src/quantum_trader/adapters/` | Strict CSV replay, simulated brokerage, and SQLite persistence |
+| `src/quantum_trader/domain/` | Immutable models, strategy, risk, accounting, execution, market controls, approvals, and request budgets |
+| `src/quantum_trader/application/` | Simulation, evaluation, reconciliation, pre-trade control, operator action, lifecycle, and reporting orchestration |
+| `src/quantum_trader/ports/` | Simulation and external broker, control-data, journal, operator-control, market-data, and event-store interfaces |
+| `src/quantum_trader/adapters/` | CSV replay, simulation, fixed-origin paper/control-data clients, strict credential files, and SQLite stores |
 | `tests/unit/` | Domain invariants and defensive-path coverage |
 | `tests/integration/` | Deterministic end-to-end replay and ledger verification |
 | `tests/smoke/` | Installed CLI, artifact, and prohibited-mode checks |

@@ -7,12 +7,12 @@ Quantum Trader Pro is a **simulation-only research engine**. It is not a broker,
 | Mode | Represented in code | CLI accepted | Network broker | Capital at risk |
 |---|---:|---:|---:|---:|
 | Offline simulation | Yes | Yes | No | No |
-| Paper trading | No | No | No | No |
-| Live trading | No | No | No | No |
+| Paper trading contracts | Yes | No | Internal adapter only; no command | No authenticated use |
+| Live trading | Identity only | No | No adapter or command | No |
 
-The `ExecutionMode` enum contains only `simulation`. The parser’s `--mode` option accepts only that value, and `ExecutionPolicy.require_simulation` provides a second application-level check. The preflight output reports that paper and live execution are not implemented.
+`ExecutionMode` makes simulation, paper, and live identities explicit, but availability is enforced separately. Every public parser and one-click launcher still accepts only `simulation`; `ExecutionPolicy.require_simulation` provides a second application-level check. Preflight reports the implemented paper safety contracts while explicitly reporting paper commands, authenticated paper acceptance, position flattening, and live execution as unavailable.
 
-No broker SDK is a runtime dependency. No API key, account ID, production endpoint, or network session is required to run the project. Adding those paths is not a configuration change; it would be a separate security-sensitive feature requiring design review.
+No broker SDK is a runtime dependency, and the standard one-click path requires no API key, account ID, production endpoint, or network session. Fixed-origin paper adapters exist behind internal contracts, but constructing or invoking them is not a configuration toggle; it requires the still-unexposed secret, approval, reconciliation, and operator boundaries.
 
 ## Risk Philosophy
 
@@ -28,13 +28,15 @@ The bundled `legacy_synthetic_daily.csv` file exists only for tests and smoke de
 
 ## Secret Policy
 
-Secrets must never be committed, printed, embedded in fixtures, included in reports, or stored in SQLite payloads. The repository intentionally needs no secret. `.gitignore` excludes environment files, keys, certificates, local databases, generated reports, caches, and credentials.
+Secrets must never be committed, printed, embedded in fixtures, included in reports, stored in SQLite payloads, or passed as CLI values. The standard repository path needs no secret. `.gitignore` excludes environment files, keys, certificates, local databases, generated reports, caches, and credentials.
 
-If a future paper adapter is proposed, it must load credentials from a managed secret store or a non-committed environment file. Logs must redact authorization headers, account numbers, order payload secrets, and connector tokens. Credential rotation must be documented and independently testable.
+The internal paper loader accepts only allowlisted files from an absolute out-of-band credential directory. It rejects symlinks, traversal, non-regular files, foreign ownership, group/world-readable permissions, oversized values, multiline text, whitespace, and short operator keys. Credential and bundle representations are redacted. No public command invokes the loader, and live credentials have no loader or adapter path. See [`docs/OPERATOR_CONTROLS.md`](docs/OPERATOR_CONTROLS.md).
 
 ## Process Safety
 
 A PID-bearing advisory lock prevents two simulation cores from using the same output path. Existing reports and ledgers are not overwritten without the explicit `--overwrite` flag. The cloud deployment uses a finite `Type=oneshot` service rather than a restart loop.
+
+Internal paper controls use a separate mode-`0600`, full-sync SQLite store that starts paused. Pause requires no approval and blocks pre-trade processing before external reads. Resume and cancel use distinct expiring, one-use HMAC approvals; cancel affects only deterministic bot-owned paper orders, verifies terminal and residual state, reconciles, and remains paused. Position flattening and every public paper command remain unavailable.
 
 The service template applies a restrictive file-creation mask, private temporary directory, privilege escalation prevention, system-call and kernel protections, and write access only to the declared state and input directories. Operators should still review the unit on their own distribution because available systemd hardening directives can vary.
 

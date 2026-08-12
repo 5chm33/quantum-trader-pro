@@ -39,6 +39,7 @@ from quantum_trader.domain.market_controls import (
     PaperControlLimits,
 )
 from quantum_trader.domain.models import OrderIntent, RiskDecision, Side
+from quantum_trader.domain.operator import OperatorControlState
 
 NOW = datetime(2026, 8, 12, 14, 30, tzinfo=UTC)
 EASTERN = ZoneInfo("America/New_York")
@@ -224,6 +225,20 @@ class FakeBroker:
 
 
 @dataclass(slots=True)
+class FakeOperatorControl:
+    paused: bool = False
+
+    def current_state(self) -> OperatorControlState:
+        return OperatorControlState(
+            paused=self.paused,
+            sequence=1,
+            changed_at=NOW - timedelta(seconds=1),
+            reason_code="test_state",
+            reason_sha256=RAW,
+        )
+
+
+@dataclass(slots=True)
 class FakeJournal:
     timestamps: tuple[datetime, ...] = ()
 
@@ -256,12 +271,14 @@ def controller(
     journal: FakeJournal | None = None,
     controls: FakeControlData | None = None,
     reconciler: FakeReconciler | None = None,
+    operator_control: FakeOperatorControl | None = None,
 ) -> PaperPreTradeController:
     return PaperPreTradeController(
         broker=broker or FakeBroker(account()),  # type: ignore[arg-type]
         journal=journal or FakeJournal(),  # type: ignore[arg-type]
         control_data=controls or FakeControlData(calendar()),
         reconciler=reconciler or FakeReconciler(reconciliation()),
+        operator_control=operator_control or FakeOperatorControl(),
         strategy_namespace="qtpro-paper",
         limits=PaperControlLimits(),
     )
@@ -277,6 +294,18 @@ def test_controller_assembles_a_complete_fresh_allowed_assessment() -> None:
     assert assessment.decision.allowed is True
     assert assessment.decision.candidate_notional == Decimal("1010")
     assert reconciler.calls == [NOW]
+
+
+def test_paused_operator_switch_stops_before_reconciliation_or_market_reads() -> None:
+    reconciler = FakeReconciler(reconciliation())
+    assessment = controller(
+        reconciler=reconciler,
+        operator_control=FakeOperatorControl(paused=True),
+    ).assess(order=approved_order(), timestamp=NOW)
+    assert assessment.ready is False
+    assert assessment.reconciliation is None
+    assert assessment.decision.reasons == ("operator_paused",)
+    assert reconciler.calls == []
 
 
 def test_controller_stops_before_market_reads_when_reconciliation_is_not_ready() -> None:

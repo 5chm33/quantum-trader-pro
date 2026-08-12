@@ -66,6 +66,13 @@ def test_cli_preflight_and_version(capsys: pytest.CaptureFixture[str]) -> None:
     assert preflight["network_required"] is False
     assert preflight["paper_arming_contracts"] is True
     assert preflight["external_broker_contracts"] is True
+    assert preflight["paper_secure_credential_files"] is True
+    assert preflight["operator_store_default_paused"] is True
+    assert preflight["operator_one_use_approvals"] is True
+    assert preflight["cancel_owned_orders_kill_switch"] is True
+    assert preflight["flatten_positions_kill_switch"] is False
+    assert preflight["operator_paper_commands_available"] is False
+    assert preflight["authenticated_paper_acceptance"] is False
     assert preflight["paper_trading_implemented"] is False
     assert preflight["live_execution_available"] is False
     assert preflight["one_click_demo"] is True

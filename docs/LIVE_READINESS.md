@@ -33,10 +33,14 @@ The repository now models `simulation`, `paper`, and `live` as explicit identiti
 | Market and portfolio controls | Implemented but not operator-enabled | Broker clock plus bounded holiday/early-close calendar; real-time IEX/SIP quotes; account, reconciliation, position, asset, and quote freshness; spread, order policy, buying power, open commitments, exposure, cash reserve, and durable order-rate gates |
 | External request budgets | Implemented | Thread-safe sliding windows default to 120 requests/minute with a non-configurable 180/minute hard ceiling, below Alpaca’s documented 200/minute account throttle |
 | Alpaca paper adapter | Implemented but not operator-enabled | Fixed `https://paper-api.alpaca.markets` origin, injectable HTTPS transport, normalized reads, one-submit idempotency, client-ID timeout recovery, verified cancellation, and activity pagination |
-| Paper credentials and command | **Not yet enabled** | No repository command loads credentials or submits an external order; authenticated paper acceptance evidence is still absent |
+| Secret isolation | Implemented but not operator-enabled | Absolute out-of-band credential directory; allowlisted regular files; no symlinks; service-user ownership; mode `0600` or stricter; bounded reads; single-line text; redacted representations |
+| Operator pause and resume | Implemented but not operator-enabled | New stores start paused; pause needs no approval; resume requires a one-use HMAC approval, exact fingerprints, valid paper context, store integrity, ready reconciliation, and account readiness |
+| Cancel owned orders | Implemented but not operator-enabled | Pauses first; uses a distinct one-use approval; cancels only deterministic strategy-owned orders; verifies terminal and residual state; reconciles; remains paused |
+| Flatten positions | **Unavailable** | Approval identity is reserved, but no flattening implementation or command exists |
+| Paper credentials and command | **Not yet enabled** | No public command loads the strict credential bundle or submits an external order; authenticated paper acceptance evidence is still absent |
 | Live execution | **Unavailable** | Gate and preflight report explicitly reject live execution; the adapter rejects the live origin |
 
-This status is intentionally narrower than “paper-ready.” Durable journal storage, full-state REST reconciliation, and market/session/stale-state/portfolio/order-rate controls are now implemented and tested. The next phases must add operator kill switches, secret acquisition, crash/partial-fill/failure-injection evidence, and authenticated paper acceptance before a paper command can exist. The current adapter remains exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted.
+This status is intentionally narrower than “paper-ready.” Durable journals, full-state REST reconciliation, market/session/stale-state/portfolio/order-rate controls, strict secret loading, default pause, one-use approvals, reconciliation-bound resume, and owned-order cancellation are now implemented and tested. The next phases must add crash/partial-fill/cancel-race/failure-injection evidence, a validated flatten design, and authenticated paper acceptance before a paper command can exist. The current adapter remains exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted.
 
 ## Non-Negotiable Invariants
 
@@ -102,15 +106,17 @@ A kill switch has three distinct actions so an operator cannot accidentally flat
 
 | Action | Effect |
 |---|---|
-| `pause` | Reject new exposure; retain and monitor existing broker state |
-| `cancel` | Pause, request cancellation of bot-owned open orders, and verify terminal or unresolved states |
-| `flatten` | Pause, cancel, reconcile, request bounded position-closing orders, and verify residual exposure |
+| `pause` | **Implemented internally.** Reject new exposure before any broker/market read; retain existing broker state; no approval required |
+| `cancel` | **Implemented internally.** Pause first, consume a one-use approval, cancel only bot-owned paper orders, verify terminal and residual states, reconcile, and stay paused |
+| `flatten` | **Unavailable.** Reserved approval identity only; no position-closing implementation or public command exists |
 
 `flatten` is never automatic on process failure, startup mismatch, or data outage. It requires an explicit operator action because emergency market orders can themselves create loss. Unresolved orders or positions keep the system in a halted, non-armed state and produce a high-severity operator report.
 
 ## Secret Boundary
 
-Paper and live credentials are optional extras and never part of the base installation. The preferred headless deployment uses systemd credentials or a mode-`0600` root-owned credential file outside the repository. Environment variables may be supported for local paper development only and must be redacted from diagnostics. The application logs credential source names, never credential values or account numbers.
+Paper credentials are optional and never part of the base installation. The strict loader accepts only named files in an absolute out-of-band credential directory, such as a systemd credential directory. It rejects symlinks, traversal, foreign ownership, broad permissions, oversized values, multiline text, whitespace, and short operator keys. Broker key values are not accepted as CLI arguments or ordinary configuration/environment values. The bundle and credential representations are always redacted, and live credentials have no loader or adapter path.
+
+The detailed state machine, acknowledgment strings, credential rules, and cancel sequence are documented in [Operator Controls and Secret Isolation](OPERATOR_CONTROLS.md).
 
 ## Paper Acceptance Gate
 

@@ -58,6 +58,14 @@ After a ready reconciliation, the pre-trade controller reads the paper account, 
 
 These controls remain unreachable from the public CLI. A decision can only deny or approve a normalized order object; it cannot submit one, acquire credentials, promote an execution mode, or bypass the still-missing operator and acceptance gates.
 
+## Operator and Secret Boundary
+
+The paper credential adapter reads three allowlisted files from an absolute out-of-band directory: paper key ID, paper secret key, and a minimum 256-bit operator control key. It rejects symlinks, traversal, non-regular files, foreign ownership, group/world-readable files, oversized content, multiline text, whitespace, and relative directories. Credential and bundle representations are always redacted. No public command constructs this bundle.
+
+The mode-`0600`, full-sync operator database starts paused. The pre-trade controller reads that state before reconciliation or any external market/broker read. Pause requires no approval. Resume requires a one-use HMAC approval bound to the exact paper action, namespace, code/configuration/account fingerprints, 128-bit nonce, acknowledgment, and expiry; it then requires a valid paper context, database integrity, ready reconciliation, and account readiness.
+
+The cancel action pauses first, consumes a distinct approval, selects only deterministic strategy-owned client IDs, verifies a terminal broker state for every cancellation, requires zero residual owned orders, reconciles, hashes its summary, and remains paused. Foreign orders are preserved. Position flattening is intentionally absent, and the live execution gate still rejects every caller. The complete contract is in [Operator Controls and Secret Isolation](docs/OPERATOR_CONTROLS.md).[7] [8]
+
 ## Core Invariants
 
 The domain models reject non-finite decimals, naive timestamps, invalid symbols, inconsistent OHLC bars, non-positive quantities and prices, negative volume, invalid target fractions, and contradictory risk decisions. `EquityPoint` requires `equity == cash + market_value`, preventing a report from carrying an unreconciled total.
@@ -117,3 +125,5 @@ The current Alpaca adapter is paper-origin-only and has no operator command. Ena
 [4]: https://docs.alpaca.markets/us/reference/getcalendar-1 "Alpaca Trading API — Get US Market Calendar"
 [5]: https://docs.alpaca.markets/us/reference/stocklatestquote-1 "Alpaca Market Data API — Latest Quote"
 [6]: https://alpaca.markets/support/usage-limit-api-calls "Alpaca Support — API Usage Limit"
+[7]: https://docs.alpaca.markets/us/docs/authentication "Alpaca — Authentication"
+[8]: https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#Credentials "systemd.exec — Credentials"

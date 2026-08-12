@@ -68,9 +68,9 @@ The adapter is not an authority on portfolio state by itself. The reconciler com
 
 ## Security Architecture Decisions
 
-The base package remains dependency-free and offline. Brokerage support is an optional extra so a normal clone and one-click simulation cannot import a broker SDK or request credentials. Broker clients are constructed only after configuration validation, secret acquisition, account fingerprint verification, and an explicit execution gate.
+The base package remains dependency-free and offline. A normal clone and one-click simulation cannot request credentials or reach a broker. The strict paper credential loader accepts only allowlisted, service-user-owned, non-symlink files with mode `0600` or stricter in an absolute out-of-band directory; no public command invokes it. Broker clients can be constructed only after configuration validation, secret acquisition, account fingerprint verification, and an explicit paper gate.
 
-The adapter receives immutable approved orders rather than strategy objects. It cannot generate signals or bypass risk. Each network method returns a normalized value object and raw payload hash, while secret-bearing headers and credential fields are excluded before logging.
+The adapter receives immutable approved orders rather than strategy objects. It cannot generate signals or bypass risk. Each network method returns a normalized value object and raw payload hash, while secret-bearing headers and credential fields are excluded before logging. A separate mode-`0600` operator database starts paused. Resume and cancel require distinct, expiring, one-use HMAC approvals; cancel touches only deterministic strategy-owned orders, verifies terminal and residual state, reconciles, and remains paused. Flattening and live execution remain unavailable.
 
 The event store uses transactions for submission journals and deduplication. External IDs are unique where the broker guarantees uniqueness; otherwise a documented composite identity is used. Projections can be rebuilt from normalized events and compared with broker state.
 
@@ -87,4 +87,4 @@ No failure automatically promotes an operating mode, substitutes a price or sign
 
 ## Acceptance Evidence
 
-A release candidate must include transition-table coverage, duplicate-event property tests, timeout/restart tests, stale-data and calendar tests, secret-redaction tests, broker-contract fixtures, SQLite integrity checks, package and launcher smoke tests, and a paper acceptance record tied to an exact commit and configuration fingerprint. Live activation remains a separate authorization and is not implied by passing the paper gate.
+A release candidate must include transition-table coverage, duplicate-event property tests, timeout/restart tests, stale-data and calendar tests, permission/symlink/secret-redaction tests, one-use approval and replay tests, pause/resume/cancel fixtures, broker-contract fixtures, SQLite integrity checks, package and launcher smoke tests, and an authenticated paper acceptance record tied to an exact commit and configuration fingerprint. Position flattening requires a separate partial-fill and residual-exposure validation campaign. Live execution remains unavailable and is not implied by passing the paper gate.
