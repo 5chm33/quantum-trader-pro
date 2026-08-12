@@ -54,6 +54,10 @@ The paper components are not reachable from the CLI, but their internal startup 
 
 A reconciliation commit atomically records the account snapshot, latest order projections, complete position snapshot, new fills, resolved submissions, activity checkpoint, and redacted mismatch report. The checkpoint advances only in the same transaction as the retained activities. A repeated run is idempotent; the one permitted duplicate evolution enriches a previously unresolved fill with its broker-resolved client order ID while requiring every economic and identity field to remain unchanged.
 
+After a ready reconciliation, the pre-trade controller reads the paper account, broker clock, positions, open orders, bounded calendar day, current asset eligibility, real-time IEX/SIP quote, and durable submission timestamps again. It requires regular session hours using the broker’s holiday and early-close calendar, rejects stale or future snapshots, validates bid/ask prices, sizes, spread, limit/day policy, buying power, open-order commitment, gross and symbol exposure, cash reserve, owned sell quantity, rolling order rate, and per-session order count. Alpaca documents calendar-provided open/close values, timestamped latest quotes, and a 200-request-per-minute account throttle; the local transports impose a lower 120/minute default with a hard 180/minute ceiling.[4] [5] [6]
+
+These controls remain unreachable from the public CLI. A decision can only deny or approve a normalized order object; it cannot submit one, acquire credentials, promote an execution mode, or bypass the still-missing operator and acceptance gates.
+
 ## Core Invariants
 
 The domain models reject non-finite decimals, naive timestamps, invalid symbols, inconsistent OHLC bars, non-positive quantities and prices, negative volume, invalid target fractions, and contradictory risk decisions. `EquityPoint` requires `equity == cash + market_value`, preventing a report from carrying an unreconciled total.
@@ -110,3 +114,6 @@ The current Alpaca adapter is paper-origin-only and has no operator command. Ena
 [1]: https://docs.python.org/3/library/sqlite3.html "Python Standard Library — sqlite3"
 [2]: https://docs.python.org/3/library/fcntl.html "Python Standard Library — fcntl"
 [3]: https://docs.python.org/3/library/msvcrt.html "Python Standard Library — msvcrt"
+[4]: https://docs.alpaca.markets/us/reference/getcalendar-1 "Alpaca Trading API — Get US Market Calendar"
+[5]: https://docs.alpaca.markets/us/reference/stocklatestquote-1 "Alpaca Market Data API — Latest Quote"
+[6]: https://alpaca.markets/support/usage-limit-api-calls "Alpaca Support — API Usage Limit"

@@ -28,6 +28,10 @@ from quantum_trader.domain.brokerage import (
 )
 from quantum_trader.domain.execution import ArmedExecutionContext, ExecutionMode, sha256_text
 from quantum_trader.domain.models import Side
+from quantum_trader.domain.rate_limits import (
+    RequestBudgetExceeded,
+    SlidingWindowRequestBudget,
+)
 
 PAPER_BASE_URL = "https://paper-api.alpaca.markets"
 PAPER_HOST = "paper-api.alpaca.markets"
@@ -114,11 +118,15 @@ class AlpacaPaperHttpTransport:
         *,
         credentials: AlpacaPaperCredentials,
         timeout_seconds: float = 10.0,
+        request_budget: SlidingWindowRequestBudget | None = None,
+        now: Callable[[], datetime] | None = None,
     ) -> None:
         if not 0 < timeout_seconds <= 60:
             raise AlpacaPaperConfigurationError("timeout_seconds must be in (0, 60]")
         self._credentials = credentials
         self._timeout_seconds = timeout_seconds
+        self._request_budget = request_budget or SlidingWindowRequestBudget()
+        self._now = now or _system_now
 
     @property
     def base_url(self) -> str:
@@ -154,6 +162,10 @@ class AlpacaPaperHttpTransport:
                 separators=(",", ":"),
                 ensure_ascii=True,
             ).encode("utf-8")
+        try:
+            self._request_budget.acquire(self._now())
+        except (RequestBudgetExceeded, ValueError) as exc:
+            raise AlpacaPaperResponseError("local paper request budget denied the call") from exc
         headers = {
             "APCA-API-KEY-ID": self._credentials.key_id,
             "APCA-API-SECRET-KEY": self._credentials.secret_key,
@@ -504,6 +516,7 @@ class AlpacaPaperBroker:
             submitted_at=submitted_at,
             updated_at=updated_at,
             raw_payload_sha256=_raw_payload_hash(payload),
+            limit_price=_optional_decimal(payload, "limit_price"),
         )
 
     @staticmethod

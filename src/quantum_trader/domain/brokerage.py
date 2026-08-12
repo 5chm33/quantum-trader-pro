@@ -376,6 +376,7 @@ class BrokerOrderSnapshot:
     submitted_at: datetime
     updated_at: datetime
     raw_payload_sha256: str
+    limit_price: Decimal | None = None
 
     def __post_init__(self) -> None:
         if not self.broker_order_id:
@@ -392,6 +393,8 @@ class BrokerOrderSnapshot:
             _positive(self.average_fill_price, "average_fill_price")
         elif self.average_fill_price is not None:
             raise ValueError("unfilled order state must not have average_fill_price")
+        if self.limit_price is not None:
+            _positive(self.limit_price, "limit_price")
         if self.status is BrokerOrderStatus.FILLED and self.filled_quantity != self.quantity:
             raise ValueError("filled status requires cumulative filled quantity")
         _aware(self.submitted_at, "submitted_at")
@@ -421,6 +424,7 @@ class BrokerOrderSnapshot:
             "submitted_at": self.submitted_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "raw_payload_sha256": self.raw_payload_sha256,
+            "limit_price": str(self.limit_price) if self.limit_price is not None else None,
         }
 
 

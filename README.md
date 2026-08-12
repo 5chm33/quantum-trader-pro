@@ -7,8 +7,8 @@
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
-[![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)](tests)
-[![Coverage](https://img.shields.io/badge/coverage-90.36%25-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-119%20passing-brightgreen)](tests)
+[![Coverage](https://img.shields.io/badge/coverage-91.08%25-brightgreen)](tests)
 [![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A--blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
 [![Execution](https://img.shields.io/badge/execution-simulation%20only-blueviolet)](SAFETY.md)
@@ -22,7 +22,7 @@
 
 Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and append-only event recording. Every generated report is derived from the same ordered observations and declares its fees, slippage, conservative execution buffer, benchmark availability, end-of-test policy, and fill methodology.
 
-The repository now contains a **fixed-sandbox Alpaca paper adapter, mode-`0600` transactional submission journal, and full-state reconciler**, but none is exposed through an operator command. The implementation covers expiring paper-only arming, deterministic client IDs, pre-submit durability, normalized broker state, one-submit idempotency, client-ID timeout recovery, verified cancellation, paginated fill ownership, duplicate execution handling, foreign-order detection, position projection, atomic checkpoints, and SQLite integrity checks. Every executable command still accepts only `simulation`; no credential loader or authenticated paper acceptance record exists, and the live gate always rejects. This remains a portfolio and research-engineering project, not an autonomous capital-deployment system.
+The repository now contains a **fixed-sandbox Alpaca paper adapter, mode-`0600` transactional submission journal, full-state reconciler, and fail-closed pre-trade control service**, but none is exposed through an operator command. The implementation covers expiring paper-only arming, deterministic client IDs, pre-submit durability, one-submit idempotency, verified cancellation, paginated fill ownership, atomic checkpoints, regular-session and early-close validation, fresh account/position/asset/quote requirements, crossed and wide-spread rejection, broker buying-power and open-order commitment, portfolio exposure and cash reserves, durable order bursts, and conservative API request budgets. Every executable command still accepts only `simulation`; no credential loader or authenticated paper acceptance record exists, and the live gate always rejects. This remains a portfolio and research-engineering project, not an autonomous capital-deployment system.
 
 | Capability | Implementation |
 |---|---|
@@ -35,7 +35,7 @@ The repository now contains a **fixed-sandbox Alpaca paper adapter, mode-`0600` 
 | Auditability | Ordered SQLite event ledger with canonical JSON payload hashes |
 | Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with total-return-proxy availability, price diagnostics, exposure, turnover, drawdown, expectancy, and risk state |
 | Process safety | Single-instance lock and explicit output-overwrite protection |
-| Broker boundary | Expiring paper-only arming; code/config/account/namespace binding; fixed Alpaca paper origin; mode-`0600` transactional journal; account/order/fill/activity/position reconciliation; idempotent submit recovery; no operator-enabled paper command and no live adapter |
+| Broker boundary | Expiring paper-only arming; fixed paper origin; transactional journal; full reconciliation; real-time IEX/SIP quote and bounded calendar reads; session, freshness, spread, asset, buying-power, exposure, cash, order-rate, and API-request controls; no operator-enabled paper command and no live adapter |
 
 ---
 

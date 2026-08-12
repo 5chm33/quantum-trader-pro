@@ -46,6 +46,9 @@ class BrokerJournal(Protocol):
     def known_client_order_ids(self) -> frozenset[str]:
         """Return every client order ID durably known to the local journal."""
 
+    def submission_timestamps(self) -> Sequence[datetime]:
+        """Return durable pre-submit timestamps in journal sequence order."""
+
     def apply_reconciliation(
         self,
         *,

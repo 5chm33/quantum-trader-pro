@@ -174,6 +174,7 @@ def test_pre_submit_persistence_is_idempotent_and_transition_validated(tmp_path)
     assert repeated == persisted
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert journal.known_client_order_ids() == frozenset({order.client_order_id})
+    assert journal.submission_timestamps() == (NOW,)
 
     with pytest.raises(BrokerJournalConflict, match="different approved content"):
         journal.persist_approved_order(
@@ -225,6 +226,8 @@ def test_pre_submit_persistence_is_idempotent_and_transition_validated(tmp_path)
     journal.close()
     with pytest.raises(BrokerJournalError, match="closed"):
         journal.integrity_check()
+    with pytest.raises(BrokerJournalError, match="closed"):
+        journal.submission_timestamps()
 
 
 def test_reconciliation_is_atomic_deduplicated_and_checkpointed(tmp_path) -> None:

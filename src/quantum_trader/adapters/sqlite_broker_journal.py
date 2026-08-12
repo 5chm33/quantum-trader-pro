@@ -297,6 +297,11 @@ class SQLiteBrokerJournal:
         rows = connection.execute("SELECT client_order_id FROM submissions ORDER BY sequence")
         return frozenset(str(row["client_order_id"]) for row in rows)
 
+    def submission_timestamps(self) -> Sequence[datetime]:
+        connection = self._require_connection()
+        rows = connection.execute("SELECT created_at FROM submissions ORDER BY sequence")
+        return tuple(datetime.fromisoformat(str(row["created_at"])) for row in rows)
+
     def apply_reconciliation(
         self,
         *,
