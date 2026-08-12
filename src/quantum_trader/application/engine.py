@@ -35,9 +35,11 @@ class SimulationResult:
     fill_count: int
     rejected_fill_count: int
     pending_order_count: int
+    canceled_order_count: int
     equity_curve: tuple[EquityPoint, ...]
     fills: tuple[Fill, ...]
     market_prices: tuple[tuple[datetime, Decimal], ...]
+    benchmark_prices: tuple[tuple[datetime, Decimal], ...]
     final_portfolio: dict[str, object]
     risk_halted: bool
     risk_halt_reason: str | None
@@ -101,6 +103,8 @@ class SimulationEngine:
         equity_curve: list[EquityPoint] = []
         fills: list[Fill] = []
         market_prices: list[tuple[datetime, Decimal]] = []
+        benchmark_prices: list[tuple[datetime, Decimal]] = []
+        adjusted_benchmark_available: bool | None = None
         last_timestamp = first_event.timestamp
 
         for event in chain((first_event,), iterator):
@@ -108,6 +112,13 @@ class SimulationEngine:
             last_timestamp = event.timestamp
             event_count += 1
             market_prices.append((event.timestamp, event.close))
+            event_has_adjusted_close = event.adjusted_close is not None
+            if adjusted_benchmark_available is None:
+                adjusted_benchmark_available = event_has_adjusted_close
+            elif adjusted_benchmark_available is not event_has_adjusted_close:
+                raise ValueError("adjusted-close benchmark values must be supplied for every event")
+            if event.adjusted_close is not None:
+                benchmark_prices.append((event.timestamp, event.adjusted_close))
             self.event_store.append(
                 event_type="market_event",
                 timestamp=event.timestamp,
@@ -132,6 +143,8 @@ class SimulationEngine:
                         },
                     )
                 else:
+                    prior_halt_reason = self.risk_manager.halt_reason
+                    self.risk_manager.observe_fill(fill, self.portfolio)
                     fills.append(fill)
                     self.event_store.append(
                         event_type="fill",
@@ -139,6 +152,13 @@ class SimulationEngine:
                         correlation_id=fill.correlation_id,
                         payload=fill.as_dict(),
                     )
+                    if self.risk_manager.halt_reason != prior_halt_reason:
+                        self.event_store.append(
+                            event_type="risk_halt",
+                            timestamp=fill.timestamp,
+                            correlation_id=fill.correlation_id,
+                            payload={"reason": self.risk_manager.halt_reason},
+                        )
 
             snapshot = self.portfolio.equity_point(event)
             equity_curve.append(snapshot)
@@ -149,6 +169,7 @@ class SimulationEngine:
                 payload=snapshot.as_dict(),
             )
 
+            prior_halt_reason = self.risk_manager.halt_reason
             try:
                 self.risk_manager.observe(self.portfolio, snapshot)
             except Exception as exc:
@@ -159,6 +180,13 @@ class SimulationEngine:
                     timestamp=event.timestamp,
                     correlation_id=event.correlation_id,
                     payload={"reason": type(exc).__name__},
+                )
+            if self.risk_manager.halt_reason != prior_halt_reason:
+                self.event_store.append(
+                    event_type="risk_halt",
+                    timestamp=event.timestamp,
+                    correlation_id=event.correlation_id,
+                    payload={"reason": self.risk_manager.halt_reason},
                 )
 
             signal = self.strategy.on_market_event(event)
@@ -236,6 +264,18 @@ class SimulationEngine:
                 },
             )
 
+        canceled_order_ids = tuple(self.broker.cancel_all())
+        for order_id in canceled_order_ids:
+            self.event_store.append(
+                event_type="order_canceled_end_of_test",
+                timestamp=last_timestamp,
+                correlation_id=run_id,
+                payload={
+                    "order_id": order_id,
+                    "policy": "cancel_pending_mark_positions_to_final_close",
+                },
+            )
+
         self.event_store.append(
             event_type="run_completed",
             timestamp=last_timestamp,
@@ -250,6 +290,8 @@ class SimulationEngine:
                 "fills": len(fills),
                 "rejected_fills": rejected_fill_count,
                 "pending_orders": self.broker.pending_order_count,
+                "canceled_orders": len(canceled_order_ids),
+                "end_of_test_policy": "cancel_pending_mark_positions_to_final_close",
                 "risk_halted": self.risk_manager.halted,
                 "risk_halt_reason": self.risk_manager.halt_reason,
                 "final_portfolio": self.portfolio.as_dict(),
@@ -268,9 +310,11 @@ class SimulationEngine:
             fill_count=len(fills),
             rejected_fill_count=rejected_fill_count,
             pending_order_count=self.broker.pending_order_count,
+            canceled_order_count=len(canceled_order_ids),
             equity_curve=tuple(equity_curve),
             fills=tuple(fills),
             market_prices=tuple(market_prices),
+            benchmark_prices=tuple(benchmark_prices),
             final_portfolio=self.portfolio.as_dict(),
             risk_halted=self.risk_manager.halted,
             risk_halt_reason=self.risk_manager.halt_reason,

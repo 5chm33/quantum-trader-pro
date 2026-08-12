@@ -112,3 +112,8 @@ class SimulatedBroker:
             )
         self._pending = remaining
         return tuple(fills)
+
+    def cancel_all(self) -> tuple[str, ...]:
+        canceled = tuple(pending.order_id for pending in self._pending)
+        self._pending.clear()
+        return canceled

@@ -2,6 +2,29 @@
 
 All notable changes to Quantum Trader Pro are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Dependency-free one-click demo launchers for Windows, macOS, Linux, and direct Python use, validated on all three operating-system runners.
+- Optional all-or-none `adjusted_close` ingestion and explicit total-return-proxy benchmark availability.
+- Flat-to-flat round-trip trade attribution with expectancy, profit factor, win/loss, holding-time, exposure, and turnover metrics.
+- Deterministic `round_trip_trades.csv`, end-of-test order cancellation events, and open-position disclosure.
+- Fee-, slippage-, and execution-gap-aware buy sizing with post-fill commitment, exposure, and cash-reserve checks.
+- Public live-readiness contract, broker threat model, and draft A+ pull request.
+
+### Changed
+
+- Replaced the exit-fill headline diagnostic with true round-trip trade metrics.
+- Raised the default declared execution-price buffer to 1,000 basis points while retaining post-fill breach detection.
+- Made the single-instance lock native on both Windows and POSIX.
+- Updated GitHub Actions to validate source, installed wheel, and one-click wrappers on Windows, macOS, and Linux.
+
+### Validation
+
+- Expanded the local suite to 55 passing tests before the walk-forward evaluation phase.
+- Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
+
 ## [0.1.0] — 2026-08-12
 
 ### Added

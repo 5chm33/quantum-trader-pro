@@ -17,6 +17,9 @@ class Broker(Protocol):
     def on_market_event(self, event: MarketEvent) -> Sequence[Fill]:
         """Process one event and return fills generated for queued orders."""
 
+    def cancel_all(self) -> Sequence[str]:
+        """Cancel every adapter-owned open order and return the canceled order IDs."""
+
     @property
     def pending_order_count(self) -> int:
         """Return the number of queued unfilled orders."""

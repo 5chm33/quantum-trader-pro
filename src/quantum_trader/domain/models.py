@@ -47,6 +47,7 @@ class MarketEvent:
     close: Decimal
     volume: int
     source: str
+    adjusted_close: Decimal | None = None
 
     def __post_init__(self) -> None:
         if self.timestamp.tzinfo is None or self.timestamp.utcoffset() is None:
@@ -64,6 +65,10 @@ class MarketEvent:
             raise ValueError("high price is inconsistent with OHLC values")
         if self.volume < 0:
             raise ValueError("volume must not be negative")
+        if self.adjusted_close is not None and (
+            self.adjusted_close <= ZERO or not self.adjusted_close.is_finite()
+        ):
+            raise ValueError("adjusted close must be finite and positive when supplied")
 
     @property
     def correlation_id(self) -> str:
@@ -78,6 +83,7 @@ class MarketEvent:
             "low": str(self.low),
             "close": str(self.close),
             "volume": self.volume,
+            "adjusted_close": (None if self.adjusted_close is None else str(self.adjusted_close)),
             "source": self.source,
             "correlation_id": self.correlation_id,
         }

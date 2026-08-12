@@ -51,6 +51,7 @@ class CsvReplayMarketData:
             missing = sorted(_REQUIRED_COLUMNS - fieldnames)
             if missing:
                 raise ValueError(f"CSV is missing required columns: {', '.join(missing)}")
+            has_adjusted_close = "adjusted_close" in fieldnames
 
             row_count = 0
             for row_number, row in enumerate(reader, start=2):
@@ -66,6 +67,9 @@ class CsvReplayMarketData:
                         close=Decimal(row["close"]),
                         volume=int(Decimal(row["volume"])),
                         source=self.source_name,
+                        adjusted_close=(
+                            Decimal(row["adjusted_close"]) if has_adjusted_close else None
+                        ),
                     )
                 except (InvalidOperation, ValueError, TypeError) as exc:
                     raise ValueError(f"invalid CSV row {row_number}: {exc}") from exc

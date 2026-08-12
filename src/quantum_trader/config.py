@@ -26,6 +26,7 @@ class SimulationConfig:
     slow_window: int = 50
     invested_fraction: Decimal = Decimal("0.95")
     slippage_bps: Decimal = Decimal("1")
+    execution_price_buffer_bps: Decimal = Decimal("1000")
     fee_per_order: Decimal = Decimal("0")
     fee_per_share: Decimal = Decimal("0")
     risk_limits: RiskLimits = field(default_factory=RiskLimits)
@@ -42,8 +43,16 @@ class SimulationConfig:
             raise ValueError("moving-average windows are invalid")
         if not Decimal("0") < self.invested_fraction <= Decimal("1"):
             raise ValueError("invested_fraction must be in (0, 1]")
-        if any(value < 0 for value in (self.slippage_bps, self.fee_per_order, self.fee_per_share)):
-            raise ValueError("slippage and fees must not be negative")
+        if any(
+            value < 0
+            for value in (
+                self.slippage_bps,
+                self.execution_price_buffer_bps,
+                self.fee_per_order,
+                self.fee_per_share,
+            )
+        ):
+            raise ValueError("slippage, execution buffer, and fees must not be negative")
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -54,6 +63,7 @@ class SimulationConfig:
             "slow_window": self.slow_window,
             "invested_fraction": str(self.invested_fraction),
             "slippage_bps": str(self.slippage_bps),
+            "execution_price_buffer_bps": str(self.execution_price_buffer_bps),
             "fee_per_order": str(self.fee_per_order),
             "fee_per_share": str(self.fee_per_share),
             "risk_limits": {

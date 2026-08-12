@@ -20,27 +20,27 @@
 
 ## What It Does
 
-Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and append-only event recording. Every generated report is derived from the same ordered observations and declares its fee, slippage, benchmark, and fill methodology.
+Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and append-only event recording. Every generated report is derived from the same ordered observations and declares its fees, slippage, conservative execution buffer, benchmark availability, end-of-test policy, and fill methodology.
 
 The repository intentionally contains **no paper- or live-broker adapter**. The command-line interface accepts only `simulation`; any paper or live mode is rejected before an adapter can be initialized. This is a portfolio and research-engineering project, not an autonomous capital-deployment system.
 
 | Capability | Implementation |
 |---|---|
-| Market data | Strict local CSV replay with timezone normalization, OHLC validation, gap checks, ordering checks, and SHA-256 provenance |
+| Market data | Strict local CSV replay with timezone normalization, OHLC validation, optional all-or-none `adjusted_close`, gap checks, ordering checks, and SHA-256 provenance |
 | Strategy | Transparent moving-average target-allocation model with deterministic warm-up behavior |
-| Risk | Position, order-notional, cash-reserve, drawdown, realized-loss, and duplicate-intent controls |
+| Risk | Fee-, slippage-, and gap-aware buy sizing plus post-fill exposure, reserve, order-notional, drawdown, realized-loss, and duplicate-intent controls |
 | Emergency behavior | New exposure is blocked while a recorded target-to-cash override remains permitted |
 | Execution | Orders fill only at the next eligible event open with declared fees and slippage |
 | Accounting | Cash, holdings, average cost, realized P&L, unrealized P&L, fees, and equity reconcile on every event |
 | Auditability | Ordered SQLite event ledger with canonical JSON payload hashes |
-| Reporting | JSON, Markdown, equity-curve CSV, fills CSV, benchmark comparison, drawdown, and risk state |
+| Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with total-return-proxy availability, price diagnostics, exposure, turnover, drawdown, expectancy, and risk state |
 | Process safety | Single-instance lock and explicit output-overwrite protection |
 
 ---
 
 ## Evaluation Card
 
-> **Methodology note:** This section reports one transparent engineering validation, not a tuned strategy result, not authenticated live performance, and not a guarantee of future returns. The benchmark is an **unadjusted price return** over the same observations; dividends are excluded.
+> **v0.1.0 baseline note:** This retained result is an earlier transparent engineering validation, not a tuned strategy result, authenticated live performance, or a guarantee of future returns. Its benchmark is an **unadjusted price return** with dividends excluded. The A+ branch now refuses to treat that price-only series as a headline total-return benchmark and is replacing this card through a preregistered evaluation workflow.
 
 The clean engine was evaluated on 1,255 daily SPY OHLCV observations spanning August 12, 2021 through August 12, 2026. The observations were obtained through the Yahoo Finance chart-data interface; Yahoo’s public historical page exposes Open, High, Low, Close, Adjusted Close, and Volume and explains its price-adjustment conventions.[1] Nasdaq independently identifies SPY as the State Street SPDR S&P 500 ETF Trust and provides a historical-data interface.[2]
 
@@ -84,7 +84,7 @@ Quantum Trader Pro requires **Python 3.11 or newer**, but the offline demo requi
 | macOS or Linux | Double-click **`launch_demo.sh`**, or run `./launch_demo.sh` |
 | Any platform with Python | Run `python launch_demo.py` |
 
-The launcher processes the bundled, clearly labeled synthetic fixture and creates a unique folder under `quantum-trader-demo-runs/` containing the SQLite ledger, reports, equity curve, and fills. It can only invoke `simulation`; it contains no paper/live endpoint or credential path.
+The launcher processes the bundled, clearly labeled synthetic fixture and creates a unique folder under `quantum-trader-demo-runs/` containing the SQLite ledger, JSON and Markdown reports, equity curve, fills, and `round_trip_trades.csv`. It discloses whether adjusted-close benchmark data is unavailable, cancels pending orders at the final bar, and marks any remaining position to the final close. It can only invoke `simulation`; it contains no paper/live endpoint or credential path.
 
 If Python is not installed, use the official installer from [python.org](https://www.python.org/downloads/), enable the Windows “Add Python to PATH” option, and run the launcher again.
 

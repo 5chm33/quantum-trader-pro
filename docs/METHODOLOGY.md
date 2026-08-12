@@ -2,105 +2,126 @@
 
 ## Objective
 
-The retained validation demonstrates that Quantum Trader Pro can process real ordered market observations, produce causally delayed simulated fills, reconcile a portfolio, enforce risk controls, compare a strategy with a clearly labeled benchmark, and reproduce identical artifacts. It does **not** establish that the chosen moving-average parameters are optimal or likely to outperform in the future.
+Quantum Trader Pro is designed to make an incorrect trading claim difficult to hide. A run must preserve ordered input provenance, causal execution, reconciled accounting, explicit risk decisions, declared costs, benchmark availability, an end-of-test convention, and deterministic artifacts. None of those properties establishes future profitability; they establish that the historical experiment is inspectable.
 
-## Data
-
-The retained evaluation uses 1,255 daily SPY OHLCV observations from August 12, 2021 through August 12, 2026. The observations were retrieved through the Yahoo Finance chart-data interface. Yahoo’s public SPY historical page exposes Open, High, Low, Close, Adjusted Close, and Volume and states that close is adjusted for splits while adjusted close also reflects dividends and capital-gain distributions.[1]
-
-The engine uses the unadjusted OHLCV quote arrays because next-open execution requires an observed open price. Therefore, the benchmark is a **price return with dividends excluded**, not a total-return index. Nasdaq independently identifies the instrument as the State Street SPDR S&P 500 ETF Trust and exposes a historical-data interface.[2]
-
-| Field | Value |
+| Evidence layer | Current status |
 |---|---|
-| Symbol | SPY |
-| Frequency | Daily |
-| Observations | 1,255 |
-| Start | 2021-08-12T13:30:00+00:00 |
-| End | 2026-08-12T13:30:00+00:00 |
-| Normalized CSV SHA-256 | `879a1a5a2404eddfb9241a5e76525cfb04798801c8aff7415f3db31ff8dc88aa` |
-| Missing OHLCV rows retained | 0 |
-| Sort order | Strictly increasing timestamp |
+| v0.1.0 retained SPY run | Reproducible engineering baseline with a price-only benchmark; not out-of-sample alpha evidence |
+| A+ methodology branch | Adjusted-close benchmark support, conservative buy sizing, post-fill checks, flat-to-flat attribution, and explicit end-state handling implemented and tested |
+| Walk-forward evaluation | Specified for the next phase; no result may be promoted before locked-window acceptance |
+| Paper brokerage | Not yet implemented; simulation remains the only executable mode |
+| Live capital | Disabled and outside the current acceptance boundary |
+
+## Input Data Contract
+
+A replay CSV must contain `datetime`, `open`, `high`, `low`, `close`, and `volume`. Timestamps are normalized to UTC, must be strictly increasing, and are checked against a declared maximum gap. OHLC values must be finite, positive, and internally consistent. The exact input bytes are identified by SHA-256 in the source name.
+
+An optional `adjusted_close` column is accepted only as a complete all-or-none series. Yahoo defines adjusted close as the closing price adjusted for applicable splits and dividend distributions.[1] The engine therefore uses raw OHLC fields for signals and next-open fills while using `adjusted_close` only as a buy-and-hold total-return proxy. If the column is absent, the report records `unavailable_missing_adjusted_close`; it does not infer dividends or promote raw price return to a total-return benchmark.
+
+| Series | Permitted use |
+|---|---|
+| Raw close | Strategy observation, portfolio marking, and secondary price-return diagnostic |
+| Raw next open | Causal simulated execution reference |
+| Adjusted close | Headline buy-and-hold total-return proxy when complete |
+| Fabricated or forward-filled benchmark | Prohibited |
 
 ## Strategy
 
-The strategy maintains a rolling close-price window. Before the slow window is full, its target allocation is zero. After warm-up, it calculates an arithmetic mean over the fast and slow windows. If the fast mean is strictly greater than the slow mean, the target fraction is the configured invested fraction; otherwise the target is zero.
+The explanatory baseline maintains a rolling close-price window. Before the slow window is full, its target allocation is zero. After warm-up, it calculates arithmetic means over the fast and slow windows. If the fast mean is strictly greater than the slow mean, the target fraction is the configured invested fraction; otherwise the target is zero.
 
-The retained run uses fast window 50, slow window 200, and invested fraction 95%. These parameters are a conventional explanatory baseline, not a result of an isolated train/validation/test selection procedure. The same observations both trigger decisions and measure the retained result, so the run should be described as a transparent historical simulation rather than an out-of-sample estimate.
+The retained v0.1.0 run used fast window 50, slow window 200, and invested fraction 95%. Those parameters were not selected through an isolated train/validation/test procedure. They remain an engineering fixture, not evidence that 50/200 is optimal. The walk-forward phase freezes selection and holdout rules before producing a replacement evaluation card.
 
-## Order Construction and Risk
+## Order Construction and Conservative Risk Sizing
 
-The portfolio converts a target fraction into a whole-share delta using current marked equity and the current close as the reference price. The risk manager then applies maximum position fraction, maximum order notional, minimum cash reserve, maximum drawdown, maximum realized loss, and duplicate-intent controls.
+The portfolio converts a target fraction into a whole-share delta using reconciled marked equity and the current close. Before a buy can be approved, the risk manager calculates a conservative executable-price bound:
 
-The retained evaluation uses a 95% maximum position fraction, $1,000,000 maximum order notional, 1% minimum cash reserve, 50% maximum drawdown halt, and $1,000,000 maximum realized-loss halt. These permissive halt values are intended to observe the strategy rather than optimize risk-adjusted performance.
+> **Conservative buy price** = reference close × (1 + (slippage bps + execution-buffer bps) / 10,000)
+
+Fixed order fees and per-share fees are reserved before quantity approval. The resulting quantity must satisfy the maximum order commitment, maximum position fraction, and minimum cash reserve simultaneously. The default execution-price buffer is 1,000 basis points; it is a sizing assumption, not a promise that a market cannot gap farther.
+
+After a buy fills, the system applies the real fill to accounting first and then rechecks order commitment, position exposure, and cash reserve at the actual fill price. A breach halts new exposure and records `risk_halt`. An executed fill is never discarded merely to preserve a risk metric. Sells remain risk-reducing and are not blocked because an appreciated position exceeds its original target fraction.
+
+Drawdown, non-positive equity, and realized-loss circuit breakers are observed on every reconciled equity point. Once halted, new buys are denied while a target-to-cash override and owned-quantity-limited sell remain eligible.
 
 ## Execution Model
 
-An intent created from event *t* cannot fill at *t*. The simulated broker queues an approved order and fills it only on the next event whose timestamp is later than the intent. The fill reference is that event’s open.
+An intent created from event *t* cannot fill at *t*. The simulated broker queues an approved order and fills it only on the next event whose timestamp is later than the intent. A buy adds configured basis-point slippage to that event’s open; a sell subtracts it. Fees combine fixed per-order and per-share amounts.
 
-For a buy, the model adds configured basis-point slippage; for a sell, it subtracts slippage. The retained run uses 2 basis points and a $0.005 per-share fee with no fixed order fee. The model assumes complete fills and does not model bid/ask spread separately, market impact, partial fills, queue position, auctions, halts, borrow, margin, or taxes.
+The simulator currently assumes complete fills. It does not model spread separately, market impact, latency, queue position, price improvement, auctions, halts, borrow, margin, taxes, or regulatory fees. Alpaca likewise warns that paper trading omits market impact, information leakage, latency slippage, queue position, price improvement, regulatory fees, and dividends, and that simulators can differ in fill, liquidity, return, and data assumptions.[2] Paper evidence will therefore remain distinct from backtest evidence, and neither will be labeled authenticated live performance.
+
+## End-of-Test Policy
+
+At the final market event, every still-pending order is canceled and recorded as `order_canceled_end_of_test`. The engine does not fabricate a later fill or a closing auction. Any remaining position is marked to the final observed close and disclosed through `open_position_at_end`. The policy identifier is `cancel_pending_mark_positions_to_final_close`.
+
+This convention separates three states that must not be conflated: a completed flat-to-flat trade, an unfilled canceled order, and an open marked position. A future optional liquidation convention would require an explicit operator selection and a defensible execution price; it cannot be silently substituted into an existing run.
 
 ## Accounting
 
-Cash decreases by buy notional plus fees and increases by sell notional minus fees. Position average cost is the quantity-weighted executed purchase price. Realized P&L is recognized on sales against average cost. Fees are accumulated separately, unrealized P&L marks remaining shares to the current close, and total equity must equal cash plus market value at each event.
+Cash decreases by buy notional plus fees and increases by sell notional minus fees. Position average cost is the quantity-weighted executed purchase price. Realized P&L is recognized on sales against average cost. Fees are accumulated separately, unrealized P&L marks remaining shares to the current close, and every equity point must satisfy `equity = cash + market value`.
 
-The report calculates turnover from fill notional and separately reports modeled slippage and fees. `winning_exit_rate` is an exit-fill statistic, not a round-trip trade win rate, because target rebalancing can create multiple partial sales.
+## Round-Trip Trade Attribution
 
-## Metrics
+Reporting groups all fills from flat to flat for each symbol. A round trip may contain multiple entries, partial exits, or rebalances. It closes only when the owned quantity returns to zero. Net trade P&L equals total sell notional minus total buy notional minus all entry and exit fees.
 
 | Metric | Definition |
 |---|---|
-| Total return | Final equity divided by initial equity minus one |
-| Annualized return | Geometric annualization over the observed elapsed time when the sample is at least 30 days |
+| Round-trip trade count | Number of completed flat-to-flat episodes |
+| Trade win rate | Positive-net-P&L round trips divided by completed round trips |
+| Expectancy | Mean net P&L per completed round trip |
+| Profit factor | Gross winning trade P&L divided by absolute gross losing trade P&L; undefined without losses |
+| Average win/loss | Mean positive or negative round-trip net P&L |
+| Holding time | Time from first entry fill to the fill that returns quantity to zero |
+| Open round trips | Started but not flat at the final observation |
+
+The legacy exit-fill diagnostic remains nested in the machine-readable report with an explicit warning that partial exit fills are not independent trades. It is not presented as the strategy’s trade win rate.
+
+## Portfolio Metrics
+
+| Metric | Definition |
+|---|---|
+| Strategy total return | Final marked equity divided by initial equity minus one |
+| Annualized return | Geometric annualization over elapsed time when the sample is at least 30 days |
 | Maximum drawdown | Minimum of current equity divided by prior running peak minus one |
-| Sharpe ratio | Mean event return divided by sample standard deviation, annualized from the median event interval, with 0% risk-free rate |
-| Buy-and-hold price return | Last unadjusted close divided by first unadjusted close minus one |
-| Excess price return | Strategy total return minus buy-and-hold price return |
-| Modeled slippage | Sum of per-fill absolute difference between event open and executed price times quantity |
+| Sharpe diagnostic | Mean event-to-event equity return divided by sample standard deviation, using a 0% risk-free rate and median-spacing annualization |
+| Total-return proxy | Last adjusted close divided by first adjusted close minus one, only when supplied for every row |
+| Price return | Last raw close divided by first raw close minus one |
+| Average exposure | Mean market value divided by equity across observations |
+| Time in market | Fraction of observations with nonzero market value |
+| Annualized turnover | Gross fill notional divided by average equity and elapsed years |
 
-The Sharpe ratio uses event-to-event equity returns and a zero risk-free rate. It is reported for transparency but should not be compared mechanically with results using monthly returns, a non-zero cash rate, or a different annualization convention.
+The Sharpe value is a reproducible diagnostic, not a universally comparable statistic. It includes cash and warm-up observations, uses event-to-event returns, assumes a zero risk-free rate, and derives annualization from observation spacing.
 
-## Retained Result
+## Retained v0.1.0 Result
 
-| Metric | Value |
+The public baseline retains its original five-year SPY result because removing an unfavorable comparison would weaken the evidence record. It used 1,255 daily observations from August 12, 2021 through August 12, 2026 and a price-only benchmark with dividends excluded.
+
+| Metric | v0.1.0 value |
 |---|---:|
 | Strategy total return | 60.21% |
 | Buy-and-hold price return | 73.66% |
 | Excess versus price benchmark | -13.45 percentage points |
 | Annualized strategy return | 9.89% |
 | Maximum drawdown | -18.07% |
-| Sharpe ratio | 0.88 |
+| Sharpe diagnostic | 0.88 |
 | Simulated fills | 58 |
-| Total modeled fees | $3.55 |
-| Total modeled slippage | $74.02 |
-| Pending orders at end | 0 |
-| Rejected fills | 0 |
-| Risk halt | No |
 
 ![SPY validation](assets/spy_validation.png)
 
-The strategy’s positive simulated return is retained alongside its benchmark underperformance. This avoids presenting only favorable evidence and keeps the repository focused on engineering quality rather than marketing a strategy.
+This card is historical baseline evidence, not the A+ acceptance result. It underperformed an already-generous price-only benchmark and did not use a locked holdout, walk-forward parameter selection, cost grid, parameter perturbation, or multi-asset protocol. Phase six replaces it only after those rules are preregistered and executed.
 
 ## Reproducibility
 
-The normalized CSV, exact configuration, deterministic IDs, injected replay clock, canonical payload serialization, and finite output set make the run reproducible. Two independent executions produced byte-identical artifacts.
+A run’s source digest, canonical configuration, deterministic identifiers, injected replay clock, ordered SQLite ledger, payload hashes, and finite artifacts support byte-for-byte reruns. The current output set is `simulation_report.json`, `simulation_report.md`, `equity_curve.csv`, `fills.csv`, `round_trip_trades.csv`, and `events.sqlite3`.
 
-| Artifact | SHA-256 |
-|---|---|
-| `simulation_report.json` | `5727c22ffc47c96345965d4e1595ac6909eba2d56b3cc77cef2c71f92eb4b50d` |
-| `simulation_report.md` | `3f60aaf7af4845aed4ceadf0b65b67cb80d831bf8ec85a657b08b113db1bc53d` |
-| `equity_curve.csv` | `cba95b43699b9b9402d0fe3e3798f0093799859d528f78e64231be57c3624929` |
-| `fills.csv` | `327e9e0554088d16f9424e06b461dae67c69dc1aa463b10ac5d6d4925ab31c19` |
-| `events.sqlite3` | `6e9f29b3a1617f338d16511c3a66f148610fed3b83cd442e392bcfda2272fbe0` |
+The repository does not ship downloaded market data as performance evidence. A reviewer must obtain appropriately licensed data, preserve its checksum, and disclose any provider revision before claiming reproduction.
 
-The repository retains the report and visualization but not the downloaded raw market dataset. A user must supply appropriately licensed data and compare its checksum before claiming an exact reproduction.
+## Research Limitations and Next Gate
 
-## Research Limitations
+The v0.1.0 result covers one ETF and one regime sequence. It has no isolated tuning and test periods, does not control for multiple trials, and uses a simplified full-fill execution model. The next acceptance gate requires a preregistered rolling training/validation/test procedure, one final locked period, adjusted-close benchmarks, predefined assets and regimes, cost sensitivity, parameter perturbation, and complete retention of attempted specifications.
 
-This validation has no isolated training, tuning, validation, and test periods. It covers one liquid U.S. ETF and one market regime sequence. It omits dividends, corporate-action cash flows, taxes, spread dynamics, and market impact. The benchmark is price only. The source may be revised by its provider, which would change the checksum and result.
-
-A strategy-focused study should define parameters before the evaluation period, add walk-forward splits, compare multiple regimes and assets, include an adjusted total-return benchmark, test cost sensitivity, use a complete exchange calendar, and retain all attempted specifications to reduce selection bias.
+A positive historical return does not establish a durable edge. A strategy can pass every engineering and research gate and still lose money in future markets.
 
 ## References
 
-[1]: https://finance.yahoo.com/quote/SPY/history/ "Yahoo Finance — SPY Historical Data"
-[2]: https://www.nasdaq.com/market-activity/etf/spy/historical "Nasdaq — SPY Historical Data"
+[1]: https://help.yahoo.com/kb/SLN28256.html "Yahoo Help — What is the adjusted close?"
+[2]: https://docs.alpaca.markets/us/docs/paper-trading "Alpaca — Paper Trading"

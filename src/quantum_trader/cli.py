@@ -67,6 +67,9 @@ def build_parser() -> argparse.ArgumentParser:
     simulate.add_argument("--slow-window", type=int, default=50)
     simulate.add_argument("--invested-fraction", type=decimal_argument, default=Decimal("0.95"))
     simulate.add_argument("--slippage-bps", type=decimal_argument, default=Decimal("1"))
+    simulate.add_argument(
+        "--execution-price-buffer-bps", type=decimal_argument, default=Decimal("1000")
+    )
     simulate.add_argument("--fee-per-order", type=decimal_argument, default=Decimal("0"))
     simulate.add_argument("--fee-per-share", type=decimal_argument, default=Decimal("0"))
     simulate.add_argument("--max-position-fraction", type=decimal_argument, default=Decimal("0.25"))
@@ -122,6 +125,7 @@ def _demo(arguments: argparse.Namespace) -> int:
             slow_window=50,
             invested_fraction=Decimal("0.25"),
             slippage_bps=Decimal("2"),
+            execution_price_buffer_bps=Decimal("1000"),
             fee_per_order=Decimal("0"),
             fee_per_share=Decimal("0.005"),
             max_position_fraction=Decimal("0.25"),
@@ -147,6 +151,7 @@ def _simulate(arguments: argparse.Namespace) -> int:
         output_dir / "simulation_report.md",
         output_dir / "equity_curve.csv",
         output_dir / "fills.csv",
+        output_dir / "round_trip_trades.csv",
     ]
     existing = [path for path in artifact_paths if path.exists()]
     if existing and not arguments.overwrite:
@@ -171,6 +176,7 @@ def _simulate(arguments: argparse.Namespace) -> int:
         slow_window=arguments.slow_window,
         invested_fraction=arguments.invested_fraction,
         slippage_bps=arguments.slippage_bps,
+        execution_price_buffer_bps=arguments.execution_price_buffer_bps,
         fee_per_order=arguments.fee_per_order,
         fee_per_share=arguments.fee_per_share,
         risk_limits=limits,
@@ -188,7 +194,13 @@ def _simulate(arguments: argparse.Namespace) -> int:
         invested_fraction=config.invested_fraction,
     )
     portfolio = Portfolio(config.initial_cash)
-    risk_manager = RiskManager(config.risk_limits)
+    risk_manager = RiskManager(
+        config.risk_limits,
+        slippage_bps=config.slippage_bps,
+        execution_price_buffer_bps=config.execution_price_buffer_bps,
+        fee_per_order=config.fee_per_order,
+        fee_per_share=config.fee_per_share,
+    )
     broker = SimulatedBroker(
         slippage_bps=config.slippage_bps,
         fee_per_order=config.fee_per_order,
@@ -221,8 +233,13 @@ def _simulate(arguments: argparse.Namespace) -> int:
         "metrics_sha256": metrics["metrics_sha256"],
         "events": result.event_count,
         "fills": result.fill_count,
+        "round_trip_trades": metrics["round_trip_trades"],
+        "headline_benchmark": metrics["headline_benchmark"],
+        "canceled_orders_at_end": result.canceled_order_count,
+        "open_position_at_end": metrics["open_position_at_end"],
         "risk_halted": result.risk_halted,
         "report": str(report_paths["markdown"]),
+        "trades": str(report_paths["round_trip_trades_csv"]),
         "ledger": str(output_dir / "events.sqlite3"),
     }
     print(json.dumps(summary, indent=2, sort_keys=True))

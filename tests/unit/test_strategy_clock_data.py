@@ -99,3 +99,29 @@ def test_exchange_clock_uses_new_york_time_explicitly() -> None:
         30,
         tzinfo=UTC,
     )
+
+
+def test_csv_replay_ingests_complete_adjusted_close_benchmark(tmp_path: Path) -> None:
+    path = tmp_path / "adjusted.csv"
+    path.write_text(
+        "datetime,open,high,low,close,adjusted_close,volume\n"
+        "2024-01-01,10,11,9,10,8,100\n"
+        "2024-01-02,11,12,10,11,9,120\n",
+        encoding="utf-8",
+    )
+
+    observations = list(CsvReplayMarketData(path, symbol="TEST").stream())
+
+    assert [item.adjusted_close for item in observations] == [Decimal("8"), Decimal("9")]
+    assert observations[0].close == Decimal("10")
+
+
+def test_csv_replay_rejects_missing_adjusted_close_value(tmp_path: Path) -> None:
+    path = tmp_path / "incomplete_adjusted.csv"
+    path.write_text(
+        "datetime,open,high,low,close,adjusted_close,volume\n2024-01-01,10,11,9,10,,100\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="invalid CSV row"):
+        list(CsvReplayMarketData(path, symbol="TEST").stream())
