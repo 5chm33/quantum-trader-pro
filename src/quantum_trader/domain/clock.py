@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime, time, timedelta
 from typing import Protocol
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 class MarketClock(Protocol):
@@ -44,9 +44,16 @@ class SystemClock:
 class WeekdayExchangeClock:
     """Minimal New York regular-session clock with no holiday-calendar claims."""
 
-    timezone = ZoneInfo("America/New_York")
     market_open = time(9, 30)
     market_close = time(16, 0)
+
+    def __init__(self) -> None:
+        try:
+            self.timezone = ZoneInfo("America/New_York")
+        except ZoneInfoNotFoundError as exc:
+            raise RuntimeError(
+                "the exchange clock requires IANA timezone data; install the 'tzdata' package"
+            ) from exc
 
     def is_regular_session(self, timestamp: datetime) -> bool:
         if timestamp.tzinfo is None or timestamp.utcoffset() is None:
