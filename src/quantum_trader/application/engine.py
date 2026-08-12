@@ -59,6 +59,7 @@ class SimulationEngine:
         broker: Broker,
         event_store: EventStore,
         clock: ReplayClock | None = None,
+        evaluation_start: datetime | None = None,
     ) -> None:
         self.config = config
         self.market_data = market_data
@@ -68,6 +69,9 @@ class SimulationEngine:
         self.broker = broker
         self.event_store = event_store
         self.clock = clock or ReplayClock()
+        if evaluation_start is not None and evaluation_start.tzinfo is None:
+            raise ValueError("evaluation_start must be timezone-aware")
+        self.evaluation_start = evaluation_start
 
     def run(self) -> SimulationResult:
         config_payload = self.config.as_dict()
@@ -75,6 +79,7 @@ class SimulationEngine:
             "run",
             self.market_data.source_name,
             json.dumps(config_payload, sort_keys=True, separators=(",", ":")),
+            self.evaluation_start.isoformat() if self.evaluation_start is not None else "all",
         )
         iterator = iter(self.market_data.stream())
         try:
@@ -91,6 +96,9 @@ class SimulationEngine:
                 "source": self.market_data.source_name,
                 "strategy": self.strategy.name,
                 "config": config_payload,
+                "evaluation_start": (
+                    self.evaluation_start.isoformat() if self.evaluation_start is not None else None
+                ),
             },
         )
 
@@ -110,14 +118,18 @@ class SimulationEngine:
         for event in chain((first_event,), iterator):
             self.clock.advance(event.timestamp)
             last_timestamp = event.timestamp
-            event_count += 1
-            market_prices.append((event.timestamp, event.close))
+            in_evaluation = (
+                self.evaluation_start is None or event.timestamp >= self.evaluation_start
+            )
+            if in_evaluation:
+                event_count += 1
+                market_prices.append((event.timestamp, event.close))
             event_has_adjusted_close = event.adjusted_close is not None
             if adjusted_benchmark_available is None:
                 adjusted_benchmark_available = event_has_adjusted_close
             elif adjusted_benchmark_available is not event_has_adjusted_close:
                 raise ValueError("adjusted-close benchmark values must be supplied for every event")
-            if event.adjusted_close is not None:
+            if event.adjusted_close is not None and in_evaluation:
                 benchmark_prices.append((event.timestamp, event.adjusted_close))
             self.event_store.append(
                 event_type="market_event",
@@ -161,7 +173,8 @@ class SimulationEngine:
                         )
 
             snapshot = self.portfolio.equity_point(event)
-            equity_curve.append(snapshot)
+            if in_evaluation:
+                equity_curve.append(snapshot)
             self.event_store.append(
                 event_type="equity",
                 timestamp=event.timestamp,
@@ -190,13 +203,17 @@ class SimulationEngine:
                 )
 
             signal = self.strategy.on_market_event(event)
-            signal_count += 1
+            if in_evaluation:
+                signal_count += 1
             self.event_store.append(
                 event_type="signal",
                 timestamp=signal.timestamp,
                 correlation_id=signal.correlation_id,
                 payload=signal.as_dict(),
             )
+
+            if not in_evaluation:
+                continue
 
             effective_signal = signal
             if (
@@ -263,6 +280,9 @@ class SimulationEngine:
                     "approved_quantity": decision.approved_quantity,
                 },
             )
+
+        if not equity_curve:
+            raise ValueError("evaluation boundary excluded every market event")
 
         canceled_order_ids = tuple(self.broker.cancel_all())
         for order_id in canceled_order_ids:

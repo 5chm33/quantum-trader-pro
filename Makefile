@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint typecheck test security docs shell build preflight demo quality clean
+.PHONY: help install format format-check lint typecheck test security docs shell research-evidence build preflight demo quality clean
 
 help:
 	@printf '%s\n' \
@@ -11,6 +11,7 @@ help:
 	  'security      Run Bandit against production source' \
 	  'docs          Validate repository-relative documentation links' \
 	  'shell         Validate portable shell launchers' \
+	  'research-evidence  Verify retained trial ledgers and locked holdout' \
 	  'build         Build source and wheel distributions' \
 	  'preflight     Print the simulation-only safety boundary' \
 	  'demo          Run and verify the offline bundled demo' \
@@ -44,6 +45,9 @@ docs:
 shell:
 	bash -n launch_demo.sh scripts/run-cloud-simulation.sh
 
+research-evidence:
+	python scripts/verify-evaluation-evidence.py
+
 build:
 	python -m build
 
@@ -56,7 +60,7 @@ demo:
 	python scripts/verify-demo-output.py .quality-demo
 	@rm -rf .quality-demo
 
-quality: format-check lint typecheck test security docs shell build demo
+quality: format-check lint typecheck test security docs shell research-evidence build demo
 
 clean:
 	rm -rf .coverage .pytest_cache .mypy_cache .ruff_cache build dist htmlcov *.egg-info src/*.egg-info .quality-demo

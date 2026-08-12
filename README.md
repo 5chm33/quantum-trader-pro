@@ -40,27 +40,28 @@ The repository intentionally contains **no paper- or live-broker adapter**. The 
 
 ## Evaluation Card
 
-> **v0.1.0 baseline note:** This retained result is an earlier transparent engineering validation, not a tuned strategy result, authenticated live performance, or a guarantee of future returns. Its benchmark is an **unadjusted price return** with dividends excluded. The A+ branch now refuses to treat that price-only series as a headline total-return benchmark and is replacing this card through the frozen [`evaluation/protocol_v1.json`](evaluation/protocol_v1.json) and its readable [`research protocol`](docs/RESEARCH_PROTOCOL.md).
+The frozen [`qtpro-walk-forward-v1`](evaluation/protocol_v1.json) protocol was committed **before** retrieving its declared multi-asset panel or observing a walk-forward result. It retained every candidate, cost, and robustness trial rather than publishing only the winner. The current moving-average strategy **failed the pre-holdout promotion gate**, so the final 252 observations for each asset remain unopened.
 
-The clean engine was evaluated on 1,255 daily SPY OHLCV observations spanning August 12, 2021 through August 12, 2026. The observations were obtained through the Yahoo Finance chart-data interface; Yahoo’s public historical page exposes Open, High, Low, Close, Adjusted Close, and Volume and explains its price-adjustment conventions.[1] Nasdaq independently identifies SPY as the State Street SPDR S&P 500 ETF Trust and provides a historical-data interface.[2]
+| Evaluation field | Observed result | Frozen gate | Outcome |
+|---|---:|---:|---|
+| Assets | SPY, QQQ, IWM, EFA, TLT, GLD | All six complete | Pass |
+| Retained trials | 2,604 | Retain every attempt | Pass |
+| Untouched base-cost test folds | 84 | At least 48 | Pass |
+| Median base excess return | **−2.27%** | At least 0% | **Fail** |
+| Folds beating adjusted-close benchmark | **15.48%** | At least 55% | **Fail** |
+| Median 2×-cost excess return | **−2.28%** | At least 0% | **Fail** |
+| Median 5×-cost excess return | −2.34% | At least −5% | Pass |
+| Worst test drawdown | **−34.33%** | No worse than −30% | **Fail** |
+| Risk-halted cost scenarios | **6** | 0 | **Fail** |
+| Final holdout | **Locked** | Open only after satisfactory pre-holdout evidence | Preserved |
 
-| Evaluation field | Result |
-|---|---:|
-| Input observations | 1,255 daily bars |
-| Strategy | 50/200-day moving-average target allocation |
-| Initial simulated equity | $100,000 |
-| Strategy return | 60.21% |
-| SPY buy-and-hold price return | 73.66% |
-| Excess versus price benchmark | -13.45 percentage points |
-| Annualized strategy return | 9.89% |
-| Maximum drawdown | -18.07% |
-| Sharpe ratio, 0% risk-free rate | 0.88 |
-| Simulated fills | 58 |
-| Execution costs | 2 bps slippage plus $0.005/share |
+![Preregistered pre-holdout gate](docs/assets/walk_forward_gate.png)
 
-![Five-year SPY validation](docs/assets/spy_validation.png)
+![Walk-forward robustness diagnostics](docs/assets/walk_forward_robustness.png)
 
-The same input and configuration were executed independently twice. The generated JSON report, Markdown report, equity curve, fills, and SQLite ledger were **byte-for-byte identical**. The full machine-readable result is retained in [`docs/assets/spy_validation_report.json`](docs/assets/spy_validation_report.json), the readable run report is available at [`docs/assets/spy_validation_report.md`](docs/assets/spy_validation_report.md), and [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md) documents the formulas, data boundary, bias limitations, and reproducibility hashes.
+The complete public evidence bundle includes all **2,016 validation trials**, **252 untouched test/cost trials**, **336 robustness trials**, fold selections, source checksums, gates, and deterministic hashes in [`evaluation/results/v1-preholdout/`](evaluation/results/v1-preholdout/). The full evaluation was executed independently twice; every core artifact was **byte-for-byte identical**. The readable [`research protocol`](docs/RESEARCH_PROTOCOL.md) and [`methodology`](docs/METHODOLOGY.md) explain the selection order, adjusted-close benchmark, cost model, start-date sensitivity, and lockbox boundary.
+
+> **Interpretation:** This is a successful falsification and reproducibility result, not evidence of an alpha edge. It does not authenticate the legacy project’s reported live history, prove future profitability, or authorize live capital. The earlier v0.1.0 single-SPY engineering run remains available in the [baseline release](https://github.com/5chm33/quantum-trader-pro/releases/tag/v0.1.0) for historical comparison, but it is not the headline strategy evaluation.
 
 ---
 

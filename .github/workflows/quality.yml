@@ -57,8 +57,9 @@ jobs:
       - name: Validate deployment and documentation assets
         run: |
           bash -n launch_demo.sh scripts/run-cloud-simulation.sh
-          python -m py_compile launch_demo.py scripts/check-doc-links.py scripts/verify-demo-output.py
+          python -m py_compile launch_demo.py scripts/*.py
           python scripts/check-doc-links.py
+          python scripts/verify-evaluation-evidence.py
 
       - name: Build source and wheel distributions
         run: python -m build

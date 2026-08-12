@@ -16,6 +16,7 @@ from quantum_trader.adapters.csv_replay import CsvReplayMarketData
 from quantum_trader.adapters.simulated_broker import SimulatedBroker
 from quantum_trader.adapters.sqlite_store import SQLiteEventStore
 from quantum_trader.application.engine import SimulationEngine
+from quantum_trader.application.evaluation import run_locked_holdout, run_walk_forward
 from quantum_trader.application.lifecycle import SingleInstanceLock
 from quantum_trader.application.reporting import calculate_metrics, write_report
 from quantum_trader.config import ExecutionPolicy, SimulationConfig
@@ -86,6 +87,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Replace only existing simulation artifacts inside the chosen output directory.",
     )
 
+    evaluate = subparsers.add_parser(
+        "evaluate",
+        help="Run the frozen preregistered walk-forward protocol on local checksummed data.",
+    )
+    evaluate.add_argument("--protocol", type=Path, required=True)
+    evaluate.add_argument("--data-dir", type=Path, required=True)
+    evaluate.add_argument("--output", type=Path, required=True)
+    evaluate.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace only existing walk-forward artifacts inside the selected output directory.",
+    )
+
+    holdout = subparsers.add_parser(
+        "open-holdout",
+        help="Open the final lockbox exactly once after pre-holdout evaluation is complete.",
+    )
+    holdout.add_argument("--protocol", type=Path, required=True)
+    holdout.add_argument("--data-dir", type=Path, required=True)
+    holdout.add_argument("--evaluation-dir", type=Path, required=True)
+    holdout.add_argument(
+        "--confirm-protocol-id",
+        required=True,
+        help="Exact protocol ID required to acknowledge the one-time holdout opening.",
+    )
+
     subparsers.add_parser("preflight", help="Verify the local safety boundary and launch support.")
     subparsers.add_parser("version", help="Print the installed package version.")
     return parser
@@ -99,6 +126,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _demo(arguments)
         if arguments.command == "simulate":
             return _simulate(arguments)
+        if arguments.command == "evaluate":
+            return _evaluate(arguments)
+        if arguments.command == "open-holdout":
+            return _open_holdout(arguments)
         if arguments.command == "preflight":
             return _preflight()
         if arguments.command == "version":
@@ -246,6 +277,28 @@ def _simulate(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _evaluate(arguments: argparse.Namespace) -> int:
+    summary = run_walk_forward(
+        protocol_path=arguments.protocol,
+        data_dir=arguments.data_dir,
+        output_dir=arguments.output,
+        overwrite=arguments.overwrite,
+    )
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0
+
+
+def _open_holdout(arguments: argparse.Namespace) -> int:
+    summary = run_locked_holdout(
+        protocol_path=arguments.protocol,
+        data_dir=arguments.data_dir,
+        evaluation_dir=arguments.evaluation_dir,
+        confirmation=arguments.confirm_protocol_id,
+    )
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0
+
+
 def _preflight() -> int:
     ExecutionPolicy.require_simulation("simulation")
     payload = {
@@ -257,6 +310,8 @@ def _preflight() -> int:
         "live_trading_implemented": False,
         "paper_trading_implemented": False,
         "one_click_demo": True,
+        "walk_forward_evaluation": True,
+        "locked_holdout_requires_explicit_confirmation": True,
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

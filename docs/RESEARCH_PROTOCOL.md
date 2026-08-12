@@ -6,6 +6,12 @@
 
 > **Interpretation boundary:** Passing this protocol would support the claim that a simple strategy survived a declared historical robustness process. It would not prove future profitability, justify autonomous live trading, or authenticate the original project’s historical live-profit claim.
 
+## Current Result
+
+The completed pre-holdout evaluation retained **2,604 trials** across six assets and 84 untouched base-cost folds. It **failed** the frozen gate: median base excess return was −2.27%, 15.48% of folds beat the adjusted-close benchmark, the worst test drawdown was −34.33%, and six cost scenarios triggered a risk halt. The complete evidence is published under [`evaluation/results/v1-preholdout/`](../evaluation/results/v1-preholdout/).
+
+The final 252 observations for each asset remain unopened. Because the pre-holdout evidence failed, no holdout receipt or result exists, and the repository does not claim research acceptance.
+
 ## Frozen Design
 
 | Dimension | Preregistered rule |
@@ -52,9 +58,28 @@ The machine-readable gates are deliberately capable of failing. The aggregate pr
 
 A failure is retained as a scientifically useful result. The repository must not lower a gate after observing an outcome under this protocol; a revised protocol requires a new version, rationale, and unexamined future data.
 
+## Reproduction
+
+Provider data are fetched locally and are not redistributed in the repository. From a development installation:
+
+```bash
+python scripts/fetch-evaluation-data.py \
+  --protocol evaluation/protocol_v1.json \
+  --output .local/evaluation-data
+
+quantum-trader evaluate \
+  --protocol evaluation/protocol_v1.json \
+  --data-dir .local/evaluation-data \
+  --output .local/v1-preholdout
+```
+
+The fetch command requires network access; evaluation itself is offline. The generated source manifest records the protocol and CSV SHA-256 digests. Provider revisions can change a future data digest, which constitutes a new dataset version rather than a silent replacement of the retained evidence.
+
+The lockbox command is intentionally **not** shown as a routine next step. It requires `--confirm-protocol-id qtpro-walk-forward-v1`, creates a durable receipt before evaluation begins, and must be used only after satisfactory pre-holdout evidence under a frozen protocol. That condition was not met.
+
 ## Artifacts
 
-The evaluation writes a protocol snapshot and digest, source manifest and checksums, complete candidate trial ledger, fold selections, out-of-sample test ledger, cost-sensitivity table, robustness table, summary JSON, readable report, and deterministic charts. The lockbox command adds its receipt and holdout-only results.
+The evaluation writes a protocol snapshot and digest, source manifest and checksums, complete candidate trial ledger, fold selections, out-of-sample test ledger, cost-sensitivity table, robustness table, summary JSON, readable report, and deterministic charts. The lockbox command adds its receipt and holdout-only results only when it is deliberately opened.
 
 ## References
 

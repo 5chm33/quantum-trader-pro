@@ -1,0 +1,130 @@
+{
+  "artifacts": {
+    "fold_selections": "fold_selections.csv",
+    "protocol_snapshot": "protocol_snapshot.json",
+    "report": "report.md",
+    "robustness_results": "robustness_results.csv",
+    "summary": "summary.json",
+    "test_results": "test_results.csv",
+    "trial_ledger": "trial_ledger.csv"
+  },
+  "assets": [
+    {
+      "csv_sha256": "cc9a1dc8bfbf980aed6d7225c803acba1b01762f7efd5e6e518b7d15af465c39",
+      "folds": 14,
+      "median_base_test_excess_return": -0.018123334945306616,
+      "median_maximum_drawdown": -0.06596355013728128,
+      "median_total_return": 0.0351206745221875,
+      "most_selected_candidate_id": "candidate_3c7451bbb3fd5ea195749dd660d0937c",
+      "observations": 2765,
+      "positive_base_test_excess_share": 0.07142857142857142,
+      "role": "U.S. large-cap equities",
+      "symbol": "SPY"
+    },
+    {
+      "csv_sha256": "e26181a92f0808c93f9eb95e232f7ef0de73789d861fcc8f42703faa9976c160",
+      "folds": 14,
+      "median_base_test_excess_return": -0.022706677464872753,
+      "median_maximum_drawdown": -0.09402845277607674,
+      "median_total_return": 0.07781028985378907,
+      "most_selected_candidate_id": "candidate_3c7451bbb3fd5ea195749dd660d0937c",
+      "observations": 2765,
+      "positive_base_test_excess_share": 0.07142857142857142,
+      "role": "U.S. growth equities",
+      "symbol": "QQQ"
+    },
+    {
+      "csv_sha256": "7a97a96406663ca2cc54827d721cc2376cd8ff108e304cb6be4293385c9c26c9",
+      "folds": 14,
+      "median_base_test_excess_return": -0.038150700613323416,
+      "median_maximum_drawdown": -0.08627734793823093,
+      "median_total_return": 0.0,
+      "most_selected_candidate_id": "candidate_3c7451bbb3fd5ea195749dd660d0937c",
+      "observations": 2765,
+      "positive_base_test_excess_share": 0.07142857142857142,
+      "role": "U.S. small-cap equities",
+      "symbol": "IWM"
+    },
+    {
+      "csv_sha256": "ecc37adc98aa0469cb323e5809683d10e92ba687685efcf5e74450b18d016572",
+      "folds": 14,
+      "median_base_test_excess_return": -0.02724117815435171,
+      "median_maximum_drawdown": -0.05459193263519821,
+      "median_total_return": 0.003100298318090851,
+      "most_selected_candidate_id": "candidate_3c7451bbb3fd5ea195749dd660d0937c",
+      "observations": 2763,
+      "positive_base_test_excess_share": 0.14285714285714285,
+      "role": "Developed ex-U.S. equities",
+      "symbol": "EFA"
+    },
+    {
+      "csv_sha256": "c6f7cacc041ae007eb105616a2a6e3e61aef915c5b31d0eb38e9f8a7d5c5db55",
+      "folds": 14,
+      "median_base_test_excess_return": -0.01621667531708855,
+      "median_maximum_drawdown": -0.04596717816146191,
+      "median_total_return": -0.0075028459152465705,
+      "most_selected_candidate_id": "candidate_13f2a69aad0158aeac6ad36a7d3c831e",
+      "observations": 2765,
+      "positive_base_test_excess_share": 0.42857142857142855,
+      "role": "Long-duration U.S. Treasuries",
+      "symbol": "TLT"
+    },
+    {
+      "csv_sha256": "023431ebbb6405e8f8a562a6645496e16a42b6e4448108c8aeebf7e514714e9b",
+      "folds": 14,
+      "median_base_test_excess_return": -0.02020312729544906,
+      "median_maximum_drawdown": -0.05633213086073005,
+      "median_total_return": 0.008026499786030282,
+      "most_selected_candidate_id": "candidate_3c7451bbb3fd5ea195749dd660d0937c",
+      "observations": 2765,
+      "positive_base_test_excess_share": 0.14285714285714285,
+      "role": "Gold",
+      "symbol": "GLD"
+    }
+  ],
+  "holdout_status": "locked",
+  "promotion_gate": {
+    "checks": {
+      "all_assets_complete": true,
+      "maximum_test_drawdown_floor": false,
+      "median_base_test_excess_return_minimum": false,
+      "median_cost_2x_test_excess_return_minimum": false,
+      "median_cost_5x_test_excess_return_minimum": true,
+      "minimum_folds_per_asset": true,
+      "negative_cash_allowed": true,
+      "pending_orders_allowed": true,
+      "positive_base_test_excess_share_minimum": false,
+      "risk_halts_allowed": false
+    },
+    "observed": {
+      "asset_fold_counts": {
+        "EFA": 14,
+        "GLD": 14,
+        "IWM": 14,
+        "QQQ": 14,
+        "SPY": 14,
+        "TLT": 14
+      },
+      "base_test_count": 84,
+      "median_base_test_excess_return": -0.02265182406869984,
+      "median_cost_2x_test_excess_return": -0.022795209863699838,
+      "median_cost_5x_test_excess_return": -0.023383667709872755,
+      "minimum_test_drawdown": -0.343273097143997,
+      "negative_cash": false,
+      "pending_orders": 0,
+      "positive_base_test_excess_share": 0.15476190476190477,
+      "risk_halts": 6,
+      "selection_count": 84
+    },
+    "passed": false
+  },
+  "protocol_id": "qtpro-walk-forward-v1",
+  "protocol_sha256": "becf6ad29b0649c7f97c76fb149d41eeb6bac92760f1ff616e4772a596d1acb5",
+  "protocol_version": "1.0.0",
+  "trial_counts": {
+    "robustness": 336,
+    "test": 252,
+    "total": 2604,
+    "validation": 2016
+  }
+}

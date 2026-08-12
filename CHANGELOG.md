@@ -12,6 +12,8 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Deterministic `round_trip_trades.csv`, end-of-test order cancellation events, and open-position disclosure.
 - Fee-, slippage-, and execution-gap-aware buy sizing with post-fill commitment, exposure, and cash-reserve checks.
 - Public live-readiness contract, broker threat model, and draft A+ pull request.
+- Machine-readable preregistered protocol, validation-only candidate selection, untouched rolling test folds, base/2×/5× cost scenarios, start-offset and execution-buffer robustness checks, complete trial retention, and a one-time holdout receipt.
+- Public `v1-preholdout` evidence bundle with complete validation, test, robustness, selection, source-checksum, and gate artifacts.
 
 ### Changed
 
@@ -19,11 +21,15 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Raised the default declared execution-price buffer to 1,000 basis points while retaining post-fill breach detection.
 - Made the single-instance lock native on both Windows and POSIX.
 - Updated GitHub Actions to validate source, installed wheel, and one-click wrappers on Windows, macOS, and Linux.
+- Replaced the obsolete single-SPY headline evaluation with the preregistered six-asset negative result while retaining v0.1.0 as historical engineering evidence.
 
 ### Validation
 
-- Expanded the local suite to 55 passing tests before the walk-forward evaluation phase.
+- Expanded the local suite to 57 passing tests before the final phase-six quality gate.
 - Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
+- Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
+- Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.
+- Preserved the final 252 observations per asset unopened because the pre-holdout evidence did not pass.
 
 ## [0.1.0] — 2026-08-12
 

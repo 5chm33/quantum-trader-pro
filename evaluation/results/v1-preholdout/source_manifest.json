@@ -1,0 +1,93 @@
+{
+  "assets": [
+    {
+      "csv_sha256": "cc9a1dc8bfbf980aed6d7225c803acba1b01762f7efd5e6e518b7d15af465c39",
+      "end": "2026-07-31T13:30:00+00:00",
+      "interval": "1d",
+      "normalized_csv": "spy_daily.csv",
+      "observations": 2765,
+      "provider": "Yahoo Finance public chart endpoint",
+      "raw_response": "spy_yahoo_raw.json",
+      "raw_sha256": "01376f8761b6aa3d740cc771bd6a8d1c56d798978252a1d04d94509bc9cc9d22",
+      "requested_period1": 1438387200,
+      "requested_period2": 1785542399,
+      "start": "2015-08-03T13:30:00+00:00",
+      "symbol": "SPY"
+    },
+    {
+      "csv_sha256": "e26181a92f0808c93f9eb95e232f7ef0de73789d861fcc8f42703faa9976c160",
+      "end": "2026-07-31T13:30:00+00:00",
+      "interval": "1d",
+      "normalized_csv": "qqq_daily.csv",
+      "observations": 2765,
+      "provider": "Yahoo Finance public chart endpoint",
+      "raw_response": "qqq_yahoo_raw.json",
+      "raw_sha256": "21ca0f5109dcf29e1726c983920bf421466bbacf6b0679cdae646dde3f93a545",
+      "requested_period1": 1438387200,
+      "requested_period2": 1785542399,
+      "start": "2015-08-03T13:30:00+00:00",
+      "symbol": "QQQ"
+    },
+    {
+      "csv_sha256": "7a97a96406663ca2cc54827d721cc2376cd8ff108e304cb6be4293385c9c26c9",
+      "end": "2026-07-31T13:30:00+00:00",
+      "interval": "1d",
+      "normalized_csv": "iwm_daily.csv",
+      "observations": 2765,
+      "provider": "Yahoo Finance public chart endpoint",
+      "raw_response": "iwm_yahoo_raw.json",
+      "raw_sha256": "6e1646c32b81aec9c6cba88ce938353b15c9be9be91a63d1ccc230a819ae0f43",
+      "requested_period1": 1438387200,
+      "requested_period2": 1785542399,
+      "start": "2015-08-03T13:30:00+00:00",
+      "symbol": "IWM"
+    },
+    {
+      "csv_sha256": "ecc37adc98aa0469cb323e5809683d10e92ba687685efcf5e74450b18d016572",
+      "end": "2026-07-31T13:30:00+00:00",
+      "interval": "1d",
+      "normalized_csv": "efa_daily.csv",
+      "observations": 2763,
+      "provider": "Yahoo Finance public chart endpoint",
+      "raw_response": "efa_yahoo_raw.json",
+      "raw_sha256": "2555c853422d993df3e2bf4e0e9a3170fffefb6203cc6c49b25f31775f915c14",
+      "requested_period1": 1438387200,
+      "requested_period2": 1785542399,
+      "start": "2015-08-03T13:30:00+00:00",
+      "symbol": "EFA"
+    },
+    {
+      "csv_sha256": "c6f7cacc041ae007eb105616a2a6e3e61aef915c5b31d0eb38e9f8a7d5c5db55",
+      "end": "2026-07-31T13:30:00+00:00",
+      "interval": "1d",
+      "normalized_csv": "tlt_daily.csv",
+      "observations": 2765,
+      "provider": "Yahoo Finance public chart endpoint",
+      "raw_response": "tlt_yahoo_raw.json",
+      "raw_sha256": "b8bd91e02f1a5af0dcab3df4a430aba9ed99317728637b7a203ccee71ffc426d",
+      "requested_period1": 1438387200,
+      "requested_period2": 1785542399,
+      "start": "2015-08-03T13:30:00+00:00",
+      "symbol": "TLT"
+    },
+    {
+      "csv_sha256": "023431ebbb6405e8f8a562a6645496e16a42b6e4448108c8aeebf7e514714e9b",
+      "end": "2026-07-31T13:30:00+00:00",
+      "interval": "1d",
+      "normalized_csv": "gld_daily.csv",
+      "observations": 2765,
+      "provider": "Yahoo Finance public chart endpoint",
+      "raw_response": "gld_yahoo_raw.json",
+      "raw_sha256": "c606ccddd1abb67a39ecf27dd6ad51b15094434d63221a4279208510fc813f06",
+      "requested_period1": 1438387200,
+      "requested_period2": 1785542399,
+      "start": "2015-08-03T13:30:00+00:00",
+      "symbol": "GLD"
+    }
+  ],
+  "protocol_id": "qtpro-walk-forward-v1",
+  "protocol_sha256": "becf6ad29b0649c7f97c76fb149d41eeb6bac92760f1ff616e4772a596d1acb5",
+  "requested_end": "2026-07-31T23:59:59+00:00",
+  "requested_start": "2015-08-01T00:00:00+00:00",
+  "retrieved_at": "2026-08-12T21:01:21.765042+00:00"
+}

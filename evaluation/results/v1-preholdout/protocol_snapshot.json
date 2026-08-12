@@ -1,0 +1,141 @@
+{
+  "base_configuration": {
+    "execution_price_buffer_bps": "1000",
+    "fee_per_order": "0",
+    "fee_per_share": "0.005",
+    "initial_cash": "100000",
+    "max_drawdown_fraction": "0.30",
+    "max_order_notional": "1000000",
+    "max_position_fraction": "0.95",
+    "max_realized_loss": "50000",
+    "min_cash_reserve_fraction": "0.01",
+    "slippage_bps": "2"
+  },
+  "candidate_grid": {
+    "constraint": "fast_window < slow_window",
+    "fast_windows": [
+      20,
+      50,
+      100
+    ],
+    "invested_fractions": [
+      "0.50",
+      "0.75",
+      "0.95"
+    ],
+    "slow_windows": [
+      100,
+      200,
+      250
+    ]
+  },
+  "cost_scenarios": [
+    {
+      "multiplier": "1",
+      "name": "base"
+    },
+    {
+      "multiplier": "2",
+      "name": "cost_2x"
+    },
+    {
+      "multiplier": "5",
+      "name": "cost_5x"
+    }
+  ],
+  "data": {
+    "adjusted_close_required": true,
+    "assets": [
+      {
+        "role": "U.S. large-cap equities",
+        "symbol": "SPY"
+      },
+      {
+        "role": "U.S. growth equities",
+        "symbol": "QQQ"
+      },
+      {
+        "role": "U.S. small-cap equities",
+        "symbol": "IWM"
+      },
+      {
+        "role": "Developed ex-U.S. equities",
+        "symbol": "EFA"
+      },
+      {
+        "role": "Long-duration U.S. Treasuries",
+        "symbol": "TLT"
+      },
+      {
+        "role": "Gold",
+        "symbol": "GLD"
+      }
+    ],
+    "end_date": "2026-07-31",
+    "frequency": "1d",
+    "maximum_gap_days": 10,
+    "start_date": "2015-08-01"
+  },
+  "frozen_on": "2026-08-12",
+  "locked_holdout": {
+    "receipt_filename": "holdout_receipt.json",
+    "receipt_required": true,
+    "run_once_after_protocol_commit": true,
+    "selection_source": "aggregate_pre_holdout_validation_results"
+  },
+  "promotion_gates": {
+    "all_assets_complete": true,
+    "locked_holdout_median_excess_return_minimum": "0",
+    "locked_holdout_positive_asset_share_minimum": "0.50",
+    "maximum_test_drawdown_floor": "-0.30",
+    "median_base_test_excess_return_minimum": "0",
+    "median_cost_2x_test_excess_return_minimum": "0",
+    "median_cost_5x_test_excess_return_minimum": "-0.05",
+    "minimum_folds_per_asset": 8,
+    "negative_cash_allowed": false,
+    "pending_orders_allowed": 0,
+    "positive_base_test_excess_share_minimum": "0.55",
+    "risk_halts_allowed": 0
+  },
+  "protocol_id": "qtpro-walk-forward-v1",
+  "protocol_version": "1.0.0",
+  "purpose": "Evaluate research robustness; do not infer future profitability or authorize live capital.",
+  "robustness": {
+    "allow_post_result_asset_removal": false,
+    "allow_post_result_parameter_changes": false,
+    "execution_price_buffer_bps": [
+      "500",
+      "1000",
+      "2000"
+    ],
+    "retain_all_attempts": true,
+    "start_offset_bars": [
+      0,
+      21,
+      63
+    ]
+  },
+  "selection": {
+    "eligibility": {
+      "maximum_drawdown_floor": -0.3,
+      "pending_orders_at_end": 0,
+      "risk_halted": false
+    },
+    "primary_metric": "excess_return_vs_total_return_proxy",
+    "scope": "validation_only",
+    "tie_breakers": [
+      "higher_excess_return_vs_total_return_proxy",
+      "lower_absolute_maximum_drawdown",
+      "lower_annualized_turnover",
+      "lexicographically_smaller_candidate_id"
+    ]
+  },
+  "windows": {
+    "locked_holdout_bars": 252,
+    "minimum_folds_per_asset": 8,
+    "step_bars": 126,
+    "test_bars": 126,
+    "train_bars": 504,
+    "validation_bars": 126
+  }
+}
