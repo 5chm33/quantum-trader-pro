@@ -1,0 +1,76 @@
+{
+  "config": {
+    "fast_window": 50,
+    "fee_per_order": "0",
+    "fee_per_share": "0.005",
+    "initial_cash": "100000",
+    "invested_fraction": "0.95",
+    "mode": "simulation",
+    "risk_limits": {
+      "max_drawdown_fraction": "0.50",
+      "max_order_notional": "1000000",
+      "max_position_fraction": "0.95",
+      "max_realized_loss": "1000000",
+      "min_cash_reserve_fraction": "0.01"
+    },
+    "slippage_bps": "2",
+    "slow_window": 200,
+    "symbol": "SPY"
+  },
+  "final_portfolio": {
+    "cash": "8702.284708",
+    "initial_cash": "100000",
+    "positions": {
+      "SPY": {
+        "average_price": "619.9008770300720118485879202",
+        "quantity": 196,
+        "symbol": "SPY"
+      }
+    },
+    "realized_pnl": "30206.40660589411432232323232",
+    "total_fees": "3.550000"
+  },
+  "methodology": {
+    "benchmark": "unadjusted buy-and-hold price return over identical source observations; dividends excluded",
+    "caveat": "simulation results are not live performance or a guarantee of future results",
+    "execution_mode": "offline deterministic simulation",
+    "fee_per_order": "0",
+    "fee_per_share": "0.005",
+    "fill_model": "next eligible event open",
+    "risk_free_rate": 0,
+    "slippage_bps": "2"
+  },
+  "metrics": {
+    "allowed_intents": 58,
+    "annualization_periods": 252.0,
+    "annualized_return": 0.09885582573392906,
+    "buy_and_hold_price_return": 0.7366044481303312,
+    "denied_intents": 0,
+    "end": "2026-08-12T13:30:00+00:00",
+    "excess_return_vs_buy_and_hold_price": -0.1345408393315812,
+    "exit_fills": 31,
+    "fills": 58,
+    "final_equity": "160206.36087987500",
+    "gross_exit_pnl": "30205.12160589411432232323232",
+    "gross_turnover": "370139.237518",
+    "initial_equity": "100000",
+    "maximum_drawdown": -0.18070922617519408,
+    "metrics_sha256": "11101d7447b01b920f9b6f8866690e46f7616973728f2e0a851db856b7c3f247",
+    "observations": 1255,
+    "pending_orders_at_end": 0,
+    "realized_pnl": "30206.40660589411432232323232",
+    "rejected_fills": 0,
+    "risk_halt_reason": null,
+    "risk_halted": false,
+    "run_id": "run_37c79bca8b8d5211823b810cabf72f66",
+    "sharpe_ratio_zero_risk_free": 0.877398070415185,
+    "source": "csv:spy_daily.csv:sha256:879a1a5a2404eddfb9241a5e76525cfb04798801c8aff7415f3db31ff8dc88aa",
+    "start": "2021-08-12T13:30:00+00:00",
+    "total_fees": "3.550000",
+    "total_modeled_slippage": "74.024199",
+    "total_return": 0.60206360879875,
+    "unrealized_pnl": "30003.50427398088567767676764",
+    "winning_exit_fills": 29,
+    "winning_exit_rate": 0.9354838709677419
+  }
+}

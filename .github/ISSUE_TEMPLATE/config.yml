@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/5chm33/quantum-trader-pro/security/advisories/new
+    about: Report vulnerabilities, credential exposure, or execution-policy bypass privately.

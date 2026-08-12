@@ -1,0 +1,44 @@
+name: Research or engineering enhancement
+description: Propose a simulation, data, risk, accounting, reporting, or deployment improvement.
+title: "[Enhancement]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Paper or live broker execution is outside the current project scope and requires a separate threat model.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What limitation or research question does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Proposed design
+      description: Identify affected domain, application, port, adapter, report, and deployment boundaries.
+    validations:
+      required: true
+  - type: textarea
+    id: methodology
+    attributes:
+      label: Methodology impact
+      description: Explain data provenance, timing, costs, bias controls, benchmark, and evidence changes.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and threat-model impact
+      description: Explain new trust boundaries, failure modes, secrets, networking, filesystem access, and rollback.
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test plan
+      description: List unit, integration, smoke, deterministic-replay, and regression evidence.
+    validations:
+      required: true

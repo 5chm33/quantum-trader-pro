@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a reproducible simulation, accounting, risk, ledger, CLI, or deployment defect.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not attach credentials, brokerage records, private account data, or proprietary datasets.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or version
+      placeholder: Git commit SHA or release tag
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the exact command and a small non-sensitive fixture if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Input provenance
+      description: State the source type, observation period, row count, and SHA-256. Do not upload restricted data.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Relevant artifacts
+      description: Report run ID, metrics checksum, event types, and redacted error output.
+  - type: dropdown
+    id: safety
+    attributes:
+      label: Safety impact
+      options:
+        - No known safety impact
+        - Accounting or metric integrity
+        - Risk-control behavior
+        - Filesystem or resource exhaustion
+        - Secret or privacy exposure
+        - Execution-policy boundary
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: I removed all credentials and private account data.
+          required: true
+        - label: I verified the issue on the latest `main` branch.
+          required: true

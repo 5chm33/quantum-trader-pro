@@ -1,0 +1,70 @@
+name: Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install project and development tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Check formatting
+        run: ruff format --check src tests
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Type check
+        run: mypy src
+
+      - name: Test with coverage
+        run: pytest --cov=quantum_trader --cov-report=term-missing
+
+      - name: Scan source for security issues
+        run: bandit -q -r src
+
+      - name: Validate deployment and documentation assets
+        run: |
+          bash -n scripts/run-cloud-simulation.sh
+          python scripts/check-doc-links.py
+
+      - name: Build source and wheel distributions
+        run: python -m build
+
+      - name: Verify installed wheel safety preflight
+        run: |
+          python -m venv /tmp/qtp-wheel
+          /tmp/qtp-wheel/bin/python -m pip install --upgrade pip
+          /tmp/qtp-wheel/bin/python -m pip install dist/*.whl
+          /tmp/qtp-wheel/bin/quantum-trader preflight

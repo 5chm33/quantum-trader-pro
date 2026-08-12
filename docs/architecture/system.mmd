@@ -1,0 +1,31 @@
+flowchart TB
+    USER[Operator or systemd] --> CLI[quantum-trader CLI]
+    CLI --> POLICY{Execution policy}
+    POLICY -->|simulation only| ENGINE[Deterministic simulation engine]
+    POLICY -->|paper or live| DENY[Reject before adapter initialization]
+
+    DATA[Checksummed local OHLCV CSV] --> MARKET[CSV replay adapter]
+    MARKET --> ENGINE
+
+    ENGINE --> CLOCK[Injected replay clock]
+    ENGINE --> STRATEGY[Transparent moving-average strategy]
+    ENGINE --> RISK[Fail-closed risk manager]
+    ENGINE --> PORTFOLIO[Reconciled portfolio aggregate]
+    ENGINE --> BROKER[Next-event simulated broker]
+    ENGINE --> STORE[Append-only SQLite event ledger]
+
+    RISK -->|approved intent| BROKER
+    RISK -->|halt| EXIT[Recorded target-to-cash override]
+    EXIT --> BROKER
+    BROKER -->|fills| PORTFOLIO
+    STORE --> REPORT[JSON, Markdown, equity, and fill reports]
+    PORTFOLIO --> REPORT
+
+    classDef boundary fill:#fff4ed,stroke:#f79009,color:#7a2e0e,stroke-width:2px;
+    classDef core fill:#eff8ff,stroke:#2e90fa,color:#1849a9,stroke-width:2px;
+    classDef safe fill:#ecfdf3,stroke:#12b76a,color:#05603a,stroke-width:2px;
+    classDef denied fill:#fef3f2,stroke:#f04438,color:#912018,stroke-width:2px;
+    class POLICY boundary;
+    class ENGINE,CLOCK,STRATEGY,RISK,PORTFOLIO core;
+    class DATA,MARKET,BROKER,STORE,REPORT,EXIT safe;
+    class DENY denied;
