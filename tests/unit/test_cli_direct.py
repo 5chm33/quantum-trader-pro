@@ -64,6 +64,10 @@ def test_cli_preflight_and_version(capsys: pytest.CaptureFixture[str]) -> None:
     preflight = json.loads(capsys.readouterr().out)
     assert preflight["allowed_modes"] == ["simulation"]
     assert preflight["network_required"] is False
+    assert preflight["paper_arming_contracts"] is True
+    assert preflight["external_broker_contracts"] is True
+    assert preflight["paper_trading_implemented"] is False
+    assert preflight["live_execution_available"] is False
     assert preflight["one_click_demo"] is True
 
     assert main(["version"]) == 0

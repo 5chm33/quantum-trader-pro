@@ -14,6 +14,9 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Public live-readiness contract, broker threat model, and draft A+ pull request.
 - Machine-readable preregistered protocol, validation-only candidate selection, untouched rolling test folds, base/2×/5× cost scenarios, start-offset and execution-buffer robustness checks, complete trial retention, and a one-time holdout receipt.
 - Public `v1-preholdout` evidence bundle with complete validation, test, robustness, selection, source-checksum, and gate artifacts.
+- Explicit simulation/paper/live profile identities with a separate availability gate, expiring paper-only arming records, exact acknowledgment, and code/configuration/account/namespace fingerprint binding.
+- Normalized broker account, clock, position, approved-order, order-state, fill-activity, pagination, cancellation, and durable submission-journal contracts.
+- Deterministic broker-safe client order IDs and a fail-closed transition validator covering duplicate updates, partial fills, cancel races, terminal states, and out-of-order regressions.
 
 ### Changed
 
@@ -22,10 +25,11 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Made the single-instance lock native on both Windows and POSIX.
 - Updated GitHub Actions to validate source, installed wheel, and one-click wrappers on Windows, macOS, and Linux.
 - Replaced the obsolete single-SPY headline evaluation with the preregistered six-asset negative result while retaining v0.1.0 as historical engineering evidence.
+- Kept every existing replay and one-click command simulation-only; paper network execution remains unimplemented and the live gate always rejects.
 
 ### Validation
 
-- Expanded the local suite to 57 passing tests before the final phase-six quality gate.
+- Expanded the local suite to 67 passing tests with 91.31% branch coverage after the execution-arming and broker-contract phase.
 - Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
 - Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
 - Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.

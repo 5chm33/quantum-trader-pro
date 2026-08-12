@@ -18,6 +18,22 @@ It does **not** mean that a strategy will make money, that a paper result predic
 
 The live profile must never be inferred from a URL, API key, or missing flag. It requires a live-specific configuration, an expiring arming record, an operator-supplied acknowledgment, a clean preflight, and a live-capable deployment policy. Paper and live credentials must be physically or logically separated; Alpaca issues distinct keys and endpoints for the environments.[1] [2]
 
+## Current Implementation Status
+
+The repository now models `simulation`, `paper`, and `live` as explicit identities, but **availability is a separate fail-closed decision**. Existing replay and one-click commands still accept only `simulation`. A paper arming record can be constructed only with the exact paper acknowledgment, expires within 24 hours, and is cryptographically bound to code, configuration, account fingerprint, and strategy namespace. The live gate always rejects.
+
+| Capability | Status | Evidence boundary |
+|---|---|---|
+| Offline simulation | Implemented | Existing deterministic replay and one-click tests |
+| Paper arming record | Implemented | Expiry, acknowledgment, fingerprint, namespace, and preflight matrix tests |
+| Normalized account/clock/order/fill/activity contracts | Implemented | Validation and transition-state unit tests |
+| Deterministic client order ID | Implemented | Stable namespace/account/intent identity tests |
+| Durable submission-journal contract | Implemented | Persisted/acknowledged/ambiguous/reconciled state invariants |
+| Paper network adapter | **Not yet implemented** | No credential loader, endpoint client, or external submission command exists |
+| Live execution | **Unavailable** | Gate and preflight report explicitly reject live execution |
+
+This status is intentionally narrower than “paper-ready.” The next phases must implement the sandbox adapter, durable journal storage, reconciliation, market/session controls, kill switches, and failure-injection evidence before a paper command can exist.
+
 ## Non-Negotiable Invariants
 
 | ID | Invariant | Required evidence |

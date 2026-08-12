@@ -7,8 +7,8 @@
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
-[![Tests](https://img.shields.io/badge/tests-42%20passing-brightgreen)](tests)
-[![Coverage](https://img.shields.io/badge/coverage-92.14%25-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-67%20passing-brightgreen)](tests)
+[![Coverage](https://img.shields.io/badge/coverage-91.31%25-brightgreen)](tests)
 [![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A--blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
 [![Execution](https://img.shields.io/badge/execution-simulation%20only-blueviolet)](SAFETY.md)
@@ -22,7 +22,7 @@
 
 Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and append-only event recording. Every generated report is derived from the same ordered observations and declares its fees, slippage, conservative execution buffer, benchmark availability, end-of-test policy, and fill methodology.
 
-The repository intentionally contains **no paper- or live-broker adapter**. The command-line interface accepts only `simulation`; any paper or live mode is rejected before an adapter can be initialized. This is a portfolio and research-engineering project, not an autonomous capital-deployment system.
+The repository intentionally contains **no active paper- or live-broker adapter yet**. It now defines expiring paper-only arming, deterministic client IDs, durable submission states, and normalized account/order/fill contracts, but every executable command still accepts only `simulation`. Paper network execution remains unavailable, and the live gate always rejects. This is a portfolio and research-engineering project, not an autonomous capital-deployment system.
 
 | Capability | Implementation |
 |---|---|
@@ -35,6 +35,7 @@ The repository intentionally contains **no paper- or live-broker adapter**. The 
 | Auditability | Ordered SQLite event ledger with canonical JSON payload hashes |
 | Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with total-return-proxy availability, price diagnostics, exposure, turnover, drawdown, expectancy, and risk state |
 | Process safety | Single-instance lock and explicit output-overwrite protection |
+| Broker boundary | Expiring paper-only arming; code/config/account/namespace binding; normalized account, clock, order, fill, activity, cancellation, and submission-journal contracts; no active network adapter |
 
 ---
 

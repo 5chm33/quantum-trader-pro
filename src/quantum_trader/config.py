@@ -4,16 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from enum import StrEnum
 from typing import Any
 
+from quantum_trader.domain.execution import ExecutionGate, ExecutionMode
 from quantum_trader.domain.risk import RiskLimits
-
-
-class ExecutionMode(StrEnum):
-    """Execution modes intentionally supported by this repository."""
-
-    SIMULATION = "simulation"
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,12 +75,4 @@ class ExecutionPolicy:
 
     @staticmethod
     def require_simulation(mode: str | ExecutionMode) -> ExecutionMode:
-        try:
-            parsed = ExecutionMode(mode)
-        except ValueError as exc:
-            raise ValueError(
-                "unsupported execution mode; this repository permits only 'simulation'"
-            ) from exc
-        if parsed is not ExecutionMode.SIMULATION:
-            raise ValueError("broker execution is not implemented")
-        return parsed
+        return ExecutionGate.require_simulation(mode)
