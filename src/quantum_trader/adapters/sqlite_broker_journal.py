@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import stat
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -53,10 +54,11 @@ class SQLiteBrokerJournal:
     """Durable, credential-free paper submission and reconciliation journal."""
 
     def __init__(self, path: str | Path) -> None:
-        self.path = Path(path).expanduser().resolve()
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path = Path(path).expanduser()
+        if not self.path.is_absolute():
+            raise BrokerJournalError("broker journal path must be absolute")
+        _prepare_secure_database_path(self.path)
         self._connection: sqlite3.Connection | None = sqlite3.connect(self.path)
-        os.chmod(self.path, 0o600)
         self._connection.row_factory = sqlite3.Row
         self._connection.execute("PRAGMA journal_mode=WAL")
         self._connection.execute("PRAGMA synchronous=FULL")
@@ -292,6 +294,17 @@ class SQLiteBrokerJournal:
         )
         return tuple(_submission_from_row(row) for row in rows)
 
+    def submission_by_client_id(
+        self,
+        client_order_id: str,
+    ) -> SubmissionJournalEntry | None:
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM submissions WHERE client_order_id = ?",
+            (client_order_id,),
+        ).fetchone()
+        return _submission_from_row(row) if row is not None else None
+
     def known_client_order_ids(self) -> frozenset[str]:
         connection = self._require_connection()
         rows = connection.execute("SELECT client_order_id FROM submissions ORDER BY sequence")
@@ -471,6 +484,12 @@ class SQLiteBrokerJournal:
                 raise BrokerJournalError("SQLite did not return a reconciliation sequence")
             connection.commit()
             return int(cursor.lastrowid)
+        except BrokerJournalError:
+            connection.rollback()
+            raise
+        except sqlite3.Error as exc:
+            connection.rollback()
+            raise BrokerJournalError("broker reconciliation transaction failed") from exc
         except Exception:
             connection.rollback()
             raise
@@ -509,6 +528,65 @@ class SQLiteBrokerJournal:
         if self._connection is None:
             raise BrokerJournalError("broker journal is closed")
         return self._connection
+
+
+def _prepare_secure_database_path(path: Path) -> None:
+    parent = path.parent
+    parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try:
+        if parent.resolve(strict=True) != parent:
+            raise BrokerJournalError(
+                "broker journal parent path must not contain symlinks or traversal"
+            )
+        parent_metadata = parent.lstat()
+    except OSError as exc:
+        raise BrokerJournalError("broker journal parent directory is unavailable") from exc
+    if not stat.S_ISDIR(parent_metadata.st_mode):
+        raise BrokerJournalError("broker journal parent must be a directory")
+    if stat.S_IMODE(parent_metadata.st_mode) & 0o022:
+        raise BrokerJournalError("broker journal parent must not be group- or world-writable")
+    _require_owner(parent_metadata.st_uid, "broker journal parent")
+
+    try:
+        database_metadata = path.lstat()
+    except FileNotFoundError:
+        if not hasattr(os, "O_CLOEXEC"):
+            raise BrokerJournalError("secure broker journal creation is unavailable") from None
+        flags = os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_CLOEXEC
+        try:
+            file_descriptor = os.open(path, flags, 0o600)
+        except OSError as exc:
+            raise BrokerJournalError("broker journal could not be created securely") from exc
+        os.close(file_descriptor)
+        return
+    except OSError as exc:
+        raise BrokerJournalError("broker journal path is unavailable") from exc
+
+    if stat.S_ISLNK(database_metadata.st_mode):
+        raise BrokerJournalError("broker journal must not be a symlink")
+    if not stat.S_ISREG(database_metadata.st_mode):
+        raise BrokerJournalError("broker journal must be a regular file")
+    _require_owner(database_metadata.st_uid, "broker journal")
+    if stat.S_IMODE(database_metadata.st_mode) & 0o077:
+        raise BrokerJournalError("broker journal permissions must be 0600 or stricter")
+    if database_metadata.st_size > 0:
+        flags = os.O_RDONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            file_descriptor = os.open(path, flags)
+            try:
+                header = os.read(file_descriptor, 16)
+            finally:
+                os.close(file_descriptor)
+        except OSError as exc:
+            raise BrokerJournalError("broker journal could not be inspected securely") from exc
+        if header != b"SQLite format 3\x00":
+            raise BrokerJournalError("broker journal has an invalid SQLite header")
+
+
+def _require_owner(owner_uid: int, label: str) -> None:
+    get_euid = getattr(os, "geteuid", None)
+    if get_euid is not None and owner_uid != get_euid():
+        raise BrokerJournalError(f"{label} is not owned by the service user")
 
 
 def _submission_from_row(row: sqlite3.Row) -> SubmissionJournalEntry:

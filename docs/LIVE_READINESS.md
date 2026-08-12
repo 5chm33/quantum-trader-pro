@@ -13,7 +13,7 @@ It does **not** mean that a strategy will make money, that a paper result predic
 | Profile | Network | Credentials | External orders | Default | One-click |
 |---|---:|---:|---:|---:|---:|
 | `simulation` | No | No | No | **Yes** | **Yes** |
-| `paper` | Yes | Paper-only | Sandbox only | No | After credential setup |
+| `paper` | Yes | Paper-only | Sandbox only | No | **No public command** |
 | `live` | Yes | Live-only | Real money | No | **Intentionally no** |
 
 The live profile must never be inferred from a URL, API key, or missing flag. It requires a live-specific configuration, an expiring arming record, an operator-supplied acknowledgment, a clean preflight, and a live-capable deployment policy. Paper and live credentials must be physically or logically separated; Alpaca issues distinct keys and endpoints for the environments.[1] [2]
@@ -32,7 +32,9 @@ The repository now models `simulation`, `paper`, and `live` as explicit identiti
 | Full-state reconciliation | Implemented but not operator-enabled | Account fingerprint/status, open orders, positions, paginated fills, client-ID ownership, unresolved submissions, execution deduplication, atomic projections, and checkpoint commit |
 | Market and portfolio controls | Implemented but not operator-enabled | Broker clock plus bounded holiday/early-close calendar; real-time IEX/SIP quotes; account, reconciliation, position, asset, and quote freshness; spread, order policy, buying power, open commitments, exposure, cash reserve, and durable order-rate gates |
 | External request budgets | Implemented | Thread-safe sliding windows default to 120 requests/minute with a non-configurable 180/minute hard ceiling, below Alpaca’s documented 200/minute account throttle |
-| Alpaca paper adapter | Implemented but not operator-enabled | Fixed `https://paper-api.alpaca.markets` origin, injectable HTTPS transport, normalized reads, one-submit idempotency, client-ID timeout recovery, verified cancellation, and activity pagination |
+| Alpaca paper adapter | Implemented but not operator-enabled | Fixed `https://paper-api.alpaca.markets` origin, injectable HTTPS transport, normalized reads, one-submit idempotency, lookup-first timeout/non-200 recovery, verified cancellation, and activity pagination |
+| Crash-safe paper execution | Implemented but not operator-enabled | Canonical payload hash; pre-submit persistence; exclusive attempt claim; durable acknowledged/ambiguous/rejected/reconciled states; global unresolved-order halt; no-blind-retry recovery |
+| Failure-injection campaign | Implemented with deterministic doubles | Every submission boundary, close/reopen restart, operator pause races, partial fills, fill-during-cancel, non-200 outcomes, corrupt paths, and injected transactional rollback; no authenticated broker evidence yet |
 | Secret isolation | Implemented but not operator-enabled | Absolute out-of-band credential directory; allowlisted regular files; no symlinks; service-user ownership; mode `0600` or stricter; bounded reads; single-line text; redacted representations |
 | Operator pause and resume | Implemented but not operator-enabled | New stores start paused; pause needs no approval; resume requires a one-use HMAC approval, exact fingerprints, valid paper context, store integrity, ready reconciliation, and account readiness |
 | Cancel owned orders | Implemented but not operator-enabled | Pauses first; uses a distinct one-use approval; cancels only deterministic strategy-owned orders; verifies terminal and residual state; reconciles; remains paused |
@@ -40,7 +42,7 @@ The repository now models `simulation`, `paper`, and `live` as explicit identiti
 | Paper credentials and command | **Not yet enabled** | No public command loads the strict credential bundle or submits an external order; authenticated paper acceptance evidence is still absent |
 | Live execution | **Unavailable** | Gate and preflight report explicitly reject live execution; the adapter rejects the live origin |
 
-This status is intentionally narrower than “paper-ready.” Durable journals, full-state REST reconciliation, market/session/stale-state/portfolio/order-rate controls, strict secret loading, default pause, one-use approvals, reconciliation-bound resume, and owned-order cancellation are now implemented and tested. The next phases must add crash/partial-fill/cancel-race/failure-injection evidence, a validated flatten design, and authenticated paper acceptance before a paper command can exist. The current adapter remains exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted.
+This status is intentionally narrower than “paper-ready.” Durable journals, full-state REST reconciliation, market/session/stale-state/portfolio/order-rate controls, strict secret loading, default pause, one-use approvals, reconciliation-bound resume, owned-order cancellation, crash-boundary recovery, partial-fill projection, cancel-race handling, and transactional failure injection are now implemented and tested. The remaining phases must add literal subprocess/service restarts, a validated flatten design, and authenticated paper acceptance before a paper command can exist. The current adapter remains exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted. The complete local matrix is documented in [Failure Injection and Recovery Evidence](FAILURE_INJECTION.md).
 
 ## Non-Negotiable Invariants
 
@@ -77,7 +79,7 @@ The adapter follows this transaction boundary:
 7. Apply fills only by unique broker execution ID or an equivalent stable composite key.
 8. Reconcile REST orders, positions, account values, and activities after startup, reconnect, and every detected gap.
 
-The `trade_updates` stream is used for timely state changes, but it is not treated as an infallible ledger. Alpaca exposes fill, partial-fill, cancel, reject, replace, expiry, and less-common transitional events; REST reconciliation remains mandatory after disconnection.[5]
+The normalized state machine includes fill, partial-fill, cancel, reject, replace, expiry, and less-common transitional events documented by Alpaca.[5] The current adapter deliberately relies on bounded REST reads and paginated activity reconciliation; a `trade_updates` stream is **not implemented**. If later added for lower latency, it remains advisory and REST reconciliation remains mandatory after disconnection.
 
 ## Pre-Trade Controls
 
@@ -116,7 +118,7 @@ A kill switch has three distinct actions so an operator cannot accidentally flat
 
 Paper credentials are optional and never part of the base installation. The strict loader accepts only named files in an absolute out-of-band credential directory, such as a systemd credential directory. It rejects symlinks, traversal, foreign ownership, broad permissions, oversized values, multiline text, whitespace, and short operator keys. Broker key values are not accepted as CLI arguments or ordinary configuration/environment values. The bundle and credential representations are always redacted, and live credentials have no loader or adapter path.
 
-The detailed state machine, acknowledgment strings, credential rules, and cancel sequence are documented in [Operator Controls and Secret Isolation](OPERATOR_CONTROLS.md).
+The detailed state machine, acknowledgment strings, credential rules, and cancel sequence are documented in [Operator Controls and Secret Isolation](OPERATOR_CONTROLS.md). Crash boundaries, transaction rollback, partial fills, cancel races, and residual risks are documented in [Failure Injection and Recovery Evidence](FAILURE_INJECTION.md).
 
 ## Paper Acceptance Gate
 

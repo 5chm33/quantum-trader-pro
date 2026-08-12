@@ -126,6 +126,7 @@ def report(
 class FakeBroker:
     orders: list[BrokerOrderSnapshot]
     terminal_cancellation: bool = True
+    fill_during_cancel: bool = False
     canceled_ids: list[str] = field(default_factory=list)
     verified_contexts: list[ArmedExecutionContext] = field(default_factory=list)
     environment: ExecutionMode = ExecutionMode.PAPER
@@ -148,11 +149,15 @@ class FakeBroker:
         self.verify_context(context)
         self.canceled_ids.append(broker_order_id)
         status = (
-            BrokerOrderStatus.CANCELED
-            if self.terminal_cancellation
-            else BrokerOrderStatus.PENDING_CANCEL
+            BrokerOrderStatus.FILLED
+            if self.fill_during_cancel
+            else (
+                BrokerOrderStatus.CANCELED
+                if self.terminal_cancellation
+                else BrokerOrderStatus.PENDING_CANCEL
+            )
         )
-        if self.terminal_cancellation:
+        if self.terminal_cancellation or self.fill_during_cancel:
             self.orders = [item for item in self.orders if item.broker_order_id != broker_order_id]
         return BrokerCancelResult(
             broker_order_id=broker_order_id,
@@ -280,6 +285,53 @@ def test_cancel_kill_switch_cancels_only_owned_orders_and_remains_paused(
     assert broker.orders == [foreign]
     assert not is_owned_client_order_id(foreign.client_order_id, NAMESPACE)
     assert reconciler.calls == [NOW]
+    assert store.current_state().paused is True
+    action_record = store.action_record(cancel_approval.approval_id)
+    assert action_record is not None
+    assert action_record.state is OperatorActionState.COMPLETED
+
+
+def test_fill_during_cancel_is_reconciled_and_system_remains_paused(
+    tmp_path: Path,
+) -> None:
+    owned = order(owned=True, suffix="f")
+    broker = FakeBroker([owned], fill_during_cancel=True)
+    store = control_store(tmp_path)
+    fill_race_report = ReconciliationReport(
+        timestamp=NOW,
+        ready=True,
+        account_sha256=FINGERPRINT.account_sha256,
+        account_permits_new_exposure=True,
+        open_order_count=0,
+        position_count=1,
+        activity_count=1,
+        new_execution_count=1,
+        resolved_submission_count=1,
+        unresolved_submission_count=0,
+        activity_checkpoint_sha256=RAW,
+        expected_positions={"SPY": Decimal("1")},
+        broker_positions={"SPY": Decimal("1")},
+        issues=(),
+    )
+    reconciler = FakeReconciler(fill_race_report)
+    actions = PaperOperatorActions(
+        broker=broker,  # type: ignore[arg-type]
+        operator_control=store,
+        reconciler=reconciler,  # type: ignore[arg-type]
+        strategy_namespace=NAMESPACE,
+    )
+    cancel_approval = approval(OperatorAction.CANCEL_OWNED_ORDERS, "f")
+    result = actions.cancel_owned_orders(
+        context=context(),
+        approval=cancel_approval,
+        expected_fingerprint=FINGERPRINT,
+        control_key=KEY,
+        timestamp=NOW,
+    )
+    assert result.succeeded is True
+    assert result.verified_terminal == 1
+    assert result.reconciliation.expected_positions == {"SPY": Decimal("1")}
+    assert broker.orders == []
     assert store.current_state().paused is True
     action_record = store.action_record(cancel_approval.approval_id)
     assert action_record is not None

@@ -278,3 +278,60 @@ def test_failed_action_is_terminal_and_closed_store_rejects_access(tmp_path: Pat
         control.current_state()
     with pytest.raises(OperatorControlError, match="closed"):
         control.integrity_check()
+
+
+def test_in_progress_kill_action_survives_restart_and_fails_closed(tmp_path: Path) -> None:
+    path = (tmp_path / "operator.db").resolve()
+    control = store(tmp_path)
+    cancel = approval(OperatorAction.CANCEL_OWNED_ORDERS, "9")
+    started = control.begin_action(
+        approval=cancel,
+        expected_action=OperatorAction.CANCEL_OWNED_ORDERS,
+        expected_fingerprint=FINGERPRINT,
+        control_key=KEY,
+        timestamp=NOW + timedelta(minutes=1),
+    )
+    assert started.state is OperatorActionState.IN_PROGRESS
+    control.close()
+
+    reopened = SQLiteOperatorControl(
+        path,
+        strategy_namespace="qtpro-paper",
+        created_at=NOW + timedelta(minutes=2),
+    )
+    retained = reopened.action_record(cancel.approval_id)
+    assert retained is not None
+    assert retained.state is OperatorActionState.IN_PROGRESS
+    assert reopened.current_state().paused is True
+    with pytest.raises(OperatorControlConflict, match="in progress"):
+        reopened.resume(
+            approval=approval(OperatorAction.RESUME, "8"),
+            expected_fingerprint=FINGERPRINT,
+            control_key=KEY,
+            timestamp=NOW + timedelta(minutes=2),
+            reason="restart must not resume around an incomplete action",
+        )
+    with pytest.raises(OperatorControlConflict, match="consumed"):
+        reopened.begin_action(
+            approval=cancel,
+            expected_action=OperatorAction.CANCEL_OWNED_ORDERS,
+            expected_fingerprint=FINGERPRINT,
+            control_key=KEY,
+            timestamp=NOW + timedelta(minutes=2),
+        )
+    failed = reopened.complete_action(
+        approval_id=cancel.approval_id,
+        succeeded=False,
+        timestamp=NOW + timedelta(minutes=2, seconds=1),
+        summary="operator process restarted during kill action",
+    )
+    assert failed.state is OperatorActionState.FAILED
+    assert reopened.current_state().paused is True
+    with pytest.raises(OperatorControlConflict, match="not in progress"):
+        reopened.complete_action(
+            approval_id=cancel.approval_id,
+            succeeded=False,
+            timestamp=NOW + timedelta(minutes=2, seconds=2),
+            summary="duplicate completion",
+        )
+    reopened.close()

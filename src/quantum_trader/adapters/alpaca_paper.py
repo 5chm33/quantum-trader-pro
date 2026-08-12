@@ -32,13 +32,18 @@ from quantum_trader.domain.rate_limits import (
     RequestBudgetExceeded,
     SlidingWindowRequestBudget,
 )
+from quantum_trader.ports.external_broker import (
+    ExternalBrokerError,
+    ExternalSubmissionAmbiguous,
+    ExternalSubmissionRejected,
+)
 
 PAPER_BASE_URL = "https://paper-api.alpaca.markets"
 PAPER_HOST = "paper-api.alpaca.markets"
 _ALLOWED_METHODS = frozenset({"GET", "POST", "DELETE"})
 
 
-class AlpacaPaperError(RuntimeError):
+class AlpacaPaperError(ExternalBrokerError):
     """Base error that never contains response bodies or credential values."""
 
 
@@ -54,8 +59,12 @@ class AmbiguousPaperRequest(AlpacaPaperError):
     """The request may have reached the sandbox but no response was observed."""
 
 
-class UnresolvedPaperSubmission(AlpacaPaperError):
+class UnresolvedPaperSubmission(AlpacaPaperError, ExternalSubmissionAmbiguous):
     """A timed-out submission could not be resolved by deterministic client ID."""
+
+
+class AlpacaPaperSubmissionRejected(AlpacaPaperError, ExternalSubmissionRejected):
+    """The sandbox definitively rejected a submitted paper order."""
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -358,7 +367,18 @@ class AlpacaPaperBroker:
                 ) from exc
             self._require_order_identity(recovered, order)
             return recovered
-        self._require_status(response, (200,))
+        if response.status_code != 200:
+            recovered = self.get_order_by_client_id(order.client_order_id)
+            if recovered is not None:
+                self._require_order_identity(recovered, order)
+                return recovered
+            if response.status_code in {400, 403, 422}:
+                raise AlpacaPaperSubmissionRejected(
+                    "paper submission was rejected; response body redacted"
+                )
+            raise UnresolvedPaperSubmission(
+                "non-success submission outcome remains unresolved after client-ID lookup"
+            )
         snapshot = self._normalize_order(_mapping(response.payload, "order"))
         self._require_order_identity(snapshot, order)
         return snapshot

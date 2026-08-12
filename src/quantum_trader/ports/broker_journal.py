@@ -43,6 +43,12 @@ class BrokerJournal(Protocol):
     def unresolved_submissions(self) -> Sequence[SubmissionJournalEntry]:
         """Return submissions not yet reconciled to a terminal local state."""
 
+    def submission_by_client_id(
+        self,
+        client_order_id: str,
+    ) -> SubmissionJournalEntry | None:
+        """Return one durable submission identity when present."""
+
     def known_client_order_ids(self) -> frozenset[str]:
         """Return every client order ID durably known to the local journal."""
 

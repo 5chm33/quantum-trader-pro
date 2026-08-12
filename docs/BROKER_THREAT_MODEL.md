@@ -47,12 +47,12 @@ The adapter is not an authority on portfolio state by itself. The reconciler com
 |---|---|---|---|---|
 | BT-01 | Credential disclosure | Unauthorized API activity | Credentials outside repository; least-privilege paper keys; redaction; file-mode checks; rotation guide | Broker/account compromise outside application |
 | BT-02 | Wrong environment | Live order sent with intended paper test | Explicit enum; endpoint allowlist; key/account fingerprint binding; live unavailable in one-click launcher | Operator config error during separately authorized live setup |
-| BT-03 | Ambiguous submit timeout | Duplicate order on retry | Persist intent and client ID first; query by client ID; no blind retry | Broker may delay visibility; system remains halted until resolved |
+| BT-03 | Ambiguous submit timeout or non-success response | Duplicate order on retry | Persist intent and client ID first; exclusive attempt claim; query by client ID; no blind retry; pause unresolved outcomes | Broker may delay visibility; authenticated timeout behavior remains acceptance work |
 | BT-04 | Duplicate stream event | Fill/accounting applied twice | Unique execution identity; transactional insert; idempotent projection | Missing stable execution ID requires conservative composite identity |
 | BT-05 | Lost or reordered stream event | Local state diverges | REST reconciliation on startup/reconnect/gap plus paginated activities | Temporary stale display before reconciliation completes |
-| BT-06 | Partial fill | Position and remaining quantity miscomputed | Explicit cumulative and incremental fill handling; invariant checks | Broker corrections may arrive later |
-| BT-07 | Cancel race | Fill occurs while cancel is pending | Continue processing updates; verify terminal state; reconcile before replacement | Market execution during cancel latency |
-| BT-08 | Process crash after submit | Unknown external order ownership | Durable submission journal; deterministic client ID; startup reconciliation before arming | Filesystem loss requires broker-side reconstruction |
+| BT-06 | Partial fill | Position and remaining quantity miscomputed | Immutable execution IDs; exact fill projection; duplicate-content checks; checkpoint in same transaction | Broker corrections may arrive later; authenticated broker partial fills remain acceptance work |
+| BT-07 | Cancel race | Fill occurs while cancel is pending | Verify the observed terminal state; reconcile fills and residual positions; remain paused | Market execution during cancel latency; flattening is unavailable |
+| BT-08 | Process crash after submit | Unknown external order ownership | Durable submission journal; deterministic client ID; lookup-only recovery; global unresolved-order halt; startup reconciliation before arming | Literal `SIGKILL`, service restart, and power-loss tests remain; filesystem loss requires broker-side reconstruction |
 | BT-09 | Stale or manipulated market data | Mispriced order | Maximum age; source identity; crossed/outlier checks; broker snapshot comparison | Legitimate extreme markets may trigger a halt |
 | BT-10 | Closed or exceptional session | Order placed outside policy | Broker clock/calendar; explicit extended-hours policy; fail closed | Broker calendar error or sudden market halt |
 | BT-11 | Order loop | Rapid repeated submissions | Duplicate fingerprint; rolling rate limits; total open-order cap; circuit breaker | Multiple independent deployments without shared lock |
@@ -63,7 +63,7 @@ The adapter is not an authority on portfolio state by itself. The reconciler com
 | BT-16 | Kill-switch misuse | Accidental liquidation | Separate pause/cancel/flatten actions; explicit confirmation; bounded symbols; event evidence | Emergency exit can realize loss |
 | BT-17 | Kill-switch failure | Exposure persists | Broker verification; unresolved exposure alarm; out-of-band broker UI instructions | Network/broker outage may prevent action |
 | BT-18 | Clock rollback | Invalid expiry or replay | UTC monotonic durations; broker timestamps; reject backwards wall-clock sequence | Host compromise |
-| BT-19 | Disk full/corruption | Intent not persisted or evidence lost | Pre-submit durable write; disk preflight; SQLite integrity; fail closed | Catastrophic disk loss |
+| BT-19 | Disk full/corruption | Intent not persisted or evidence lost | Pre-submit durable write; secure regular-file path; SQLite header/integrity checks; atomic rollback; fail closed | Disk exhaustion and physical-media failure remain untested; catastrophic disk loss requires broker-side reconstruction |
 | BT-20 | Misleading performance claim | Unsafe trust in strategy | Strict simulation/paper/live labels; benchmark and cost disclosure; broker-evidence boundary | Readers may ignore documentation |
 
 ## Security Architecture Decisions
@@ -72,7 +72,7 @@ The base package remains dependency-free and offline. A normal clone and one-cli
 
 The adapter receives immutable approved orders rather than strategy objects. It cannot generate signals or bypass risk. Each network method returns a normalized value object and raw payload hash, while secret-bearing headers and credential fields are excluded before logging. A separate mode-`0600` operator database starts paused. Resume and cancel require distinct, expiring, one-use HMAC approvals; cancel touches only deterministic strategy-owned orders, verifies terminal and residual state, reconciles, and remains paused. Flattening and live execution remain unavailable.
 
-The event store uses transactions for submission journals and deduplication. External IDs are unique where the broker guarantees uniqueness; otherwise a documented composite identity is used. Projections can be rebuilt from normalized events and compared with broker state.
+The event store uses transactions for submission journals and deduplication. External IDs are unique where the broker guarantees uniqueness; otherwise a documented composite identity is used. Projections can be rebuilt from normalized events and compared with broker state. The crash-safe executor persists before submission, claims one attempt, treats post-start uncertainty as ambiguous, blocks all new orders while any submission is unresolved, and exposes a recovery method that has no submission capability. The executable matrix and residual storage limitations are documented in [Failure Injection and Recovery Evidence](FAILURE_INJECTION.md).
 
 ## Operational Response
 
@@ -87,4 +87,4 @@ No failure automatically promotes an operating mode, substitutes a price or sign
 
 ## Acceptance Evidence
 
-A release candidate must include transition-table coverage, duplicate-event property tests, timeout/restart tests, stale-data and calendar tests, permission/symlink/secret-redaction tests, one-use approval and replay tests, pause/resume/cancel fixtures, broker-contract fixtures, SQLite integrity checks, package and launcher smoke tests, and an authenticated paper acceptance record tied to an exact commit and configuration fingerprint. Position flattening requires a separate partial-fill and residual-exposure validation campaign. Live execution remains unavailable and is not implied by passing the paper gate.
+The deterministic release-candidate evidence now includes transition-table coverage, duplicate-event tests, every local submission crash boundary, close/reopen recovery, partial fills, a fill-during-cancel race, non-success HTTP classification, operator pause races, in-progress kill-action restart, stale-data and calendar tests, permission/symlink/secret-redaction tests, SQLite corruption rejection, injected transaction rollback, package checks, and cross-platform launchers. It still requires literal subprocess/service termination, disk-exhaustion tests, an authenticated multi-session paper acceptance record tied to an exact commit/configuration/account fingerprint, and a separate flattening campaign. Live execution remains unavailable and is not implied by passing any paper gate.

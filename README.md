@@ -7,8 +7,8 @@
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
-[![Tests](https://img.shields.io/badge/tests-140%20passing-brightgreen)](tests)
-[![Coverage](https://img.shields.io/badge/coverage-90.73%25-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen)](tests)
+[![Coverage](https://img.shields.io/badge/coverage-90.23%25-brightgreen)](tests)
 [![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A--blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
 [![Execution](https://img.shields.io/badge/execution-simulation%20only-blueviolet)](SAFETY.md)
@@ -35,7 +35,7 @@ The repository now contains a **fixed-sandbox Alpaca paper adapter, transactiona
 | Auditability | Ordered SQLite event ledger with canonical JSON payload hashes |
 | Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with total-return-proxy availability, price diagnostics, exposure, turnover, drawdown, expectancy, and risk state |
 | Process safety | Single-instance lock and explicit output-overwrite protection |
-| Broker boundary | Expiring paper arming; fixed paper origin; transactional journals; reconciliation; market and portfolio gates; strict credential files; default pause; one-use resume/cancel approvals; owned-orders-only verified cancel; no operator-enabled paper command, flatten service, or live adapter |
+| Broker boundary | Expiring paper arming; fixed paper origin; pre-submit journal; exclusive attempt claim; no-blind-retry recovery; reconciliation; market and portfolio gates; strict credential files; default pause; one-use resume/cancel approvals; owned-orders-only verified cancel; no operator-enabled paper command, flatten service, or live adapter |
 
 ---
 
@@ -72,7 +72,7 @@ The complete public evidence bundle includes all **2,016 validation trials**, **
 
 The architecture uses ports and adapters so market data, brokerage, and persistence remain outside the domain model. The strategy never calls a broker directly. The engine records the market event, reconciles existing fills, marks the portfolio, evaluates circuit breakers, generates a signal, translates it into an intent, applies risk policy, and only then hands an approved order to the simulated broker.
 
-The current implementation is deliberately finite rather than an always-on market daemon. A system service can schedule or launch a simulation job; paper credentials can now be loaded only from strict out-of-band files, but no public command consumes them or submits an order. See [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SAFETY.md`](SAFETY.md), and [`THREAT_MODEL.md`](THREAT_MODEL.md) for the current design boundary. The in-progress A+ expansion is governed by [`docs/LIVE_READINESS.md`](docs/LIVE_READINESS.md), [`docs/OPERATOR_CONTROLS.md`](docs/OPERATOR_CONTROLS.md), and [`docs/BROKER_THREAT_MODEL.md`](docs/BROKER_THREAT_MODEL.md); [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the hardened simulation installation.
+The current implementation is deliberately finite rather than an always-on market daemon. A system service can schedule or launch a simulation job; paper credentials can now be loaded only from strict out-of-band files, but no public command consumes them or submits an order. See [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SAFETY.md`](SAFETY.md), and [`THREAT_MODEL.md`](THREAT_MODEL.md) for the current design boundary. The in-progress A+ expansion is governed by [`docs/LIVE_READINESS.md`](docs/LIVE_READINESS.md), [`docs/OPERATOR_CONTROLS.md`](docs/OPERATOR_CONTROLS.md), [`docs/FAILURE_INJECTION.md`](docs/FAILURE_INJECTION.md), and [`docs/BROKER_THREAT_MODEL.md`](docs/BROKER_THREAT_MODEL.md); [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the hardened simulation installation.
 
 ---
 
@@ -125,6 +125,7 @@ The CLI refuses to overwrite an existing event ledger or report set unless `--ov
 | `simulation_report.md` | Human-readable evaluation card and methodology disclosure |
 | `equity_curve.csv` | Timestamped reconciled cash, market value, equity, P&L, and fees |
 | `fills.csv` | Simulated fill IDs, side, quantity, price, fees, slippage, and notional |
+| `round_trip_trades.csv` | Flat-to-flat trade attribution with entry/exit notional, fees, realized P&L, duration, and return |
 
 The report embeds the input checksum through the source identifier and adds a metrics checksum. Repeating the same code, source bytes, and configuration produces the same core artifacts.
 
@@ -143,7 +144,7 @@ bandit -q -r src
 python -m build
 ```
 
-The current feature branch is **140 passing tests**, **90.73% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. Protected CI repeats the quality gate on Python 3.11 and 3.12 and validates one-click launchers on Linux, macOS, and Windows.
+The current feature branch is **160 passing tests**, **90.23% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. The suite includes hard-crash boundaries, close/reopen recovery, partial fills, cancel races, timeout classification, pause races, corrupt-path rejection, and injected transactional rollback. Protected CI repeats the quality gate on Python 3.11 and 3.12 and validates one-click launchers on Linux, macOS, and Windows.
 
 ---
 
@@ -152,13 +153,13 @@ The current feature branch is **140 passing tests**, **90.73% branch coverage**,
 | Path | Responsibility |
 |---|---|
 | `src/quantum_trader/domain/` | Immutable models, strategy, risk, accounting, execution, market controls, approvals, and request budgets |
-| `src/quantum_trader/application/` | Simulation, evaluation, reconciliation, pre-trade control, operator action, lifecycle, and reporting orchestration |
+| `src/quantum_trader/application/` | Simulation, evaluation, crash-safe paper execution, reconciliation, pre-trade control, operator action, lifecycle, and reporting orchestration |
 | `src/quantum_trader/ports/` | Simulation and external broker, control-data, journal, operator-control, market-data, and event-store interfaces |
 | `src/quantum_trader/adapters/` | CSV replay, simulation, fixed-origin paper/control-data clients, strict credential files, and SQLite stores |
 | `tests/unit/` | Domain invariants and defensive-path coverage |
-| `tests/integration/` | Deterministic end-to-end replay and ledger verification |
+| `tests/integration/` | Deterministic replay, broker reconciliation, operator actions, partial fills, cancel races, and crash-recovery verification |
 | `tests/smoke/` | Installed CLI, artifact, and prohibited-mode checks |
-| `docs/` | Architecture, methodology, legacy audit, deployment, and visual evidence |
+| `docs/` | Architecture, methodology, failure injection, operator controls, legacy audit, deployment, and visual evidence |
 | `deployment/` | Hardened simulation-only systemd templates |
 
 ---
@@ -175,9 +176,9 @@ The archive documents substantial engineering effort and long-running operation,
 
 ## Known Limitations
 
-Quantum Trader Pro currently models a single long-only asset per run, uses a weekday/session helper rather than a complete exchange-holiday calendar, and does not apply dividends or corporate actions. The included strategy has not undergone isolated parameter selection, walk-forward validation, or multi-regime out-of-sample testing. The simulated broker does not model partial fills, queue position, market impact, halts, borrow, margin, options, or taxes.
+The offline simulator currently models one long-only asset per run and does not apply dividends, corporate actions, queue position, market impact, halts, borrow, margin, options, or taxes. Its bundled demo uses synthetic data and is not performance evidence. The preregistered six-asset walk-forward campaign failed its promotion gate, so the final holdout remains locked and the strategy has no validated alpha claim.
 
-These limitations are intentional and documented. Adding a paper adapter would require broker-specific authentication, rate-limit and outage handling, account reconciliation, idempotent client order IDs, and a separate integration-test environment. Live execution is outside the current scope.
+The internal paper layer now has fixed-sandbox authentication contracts, broker calendars, current-state controls, deterministic order IDs, partial-fill reconciliation, durable recovery, and operator safeguards, but the configured account is unauthenticated and **no public paper command exists**. Real subprocess termination, physical power loss, disk exhaustion, authenticated rate-limit/outage behavior, and broker-generated partial fills remain acceptance work. Position flattening and all live execution remain unavailable.
 
 ---
 

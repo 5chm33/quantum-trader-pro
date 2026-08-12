@@ -16,6 +16,7 @@ from quantum_trader.adapters.alpaca_paper import (
     AlpacaPaperCredentials,
     AlpacaPaperHttpTransport,
     AlpacaPaperResponseError,
+    AlpacaPaperSubmissionRejected,
     AmbiguousPaperRequest,
     PaperTransportResponse,
     UnresolvedPaperSubmission,
@@ -748,3 +749,122 @@ def test_http_transport_rejects_invalid_json_and_classifies_timeout(
     )
     with pytest.raises(AmbiguousPaperRequest, match="ambiguous"):
         transport.request(method="GET", path="/v2/account")
+
+
+def test_non_success_submit_uses_lookup_before_rejected_or_ambiguous_classification() -> None:
+    order = approved_order()
+    body: dict[str, object] = {
+        "symbol": "SPY",
+        "qty": "4",
+        "side": "buy",
+        "type": "limit",
+        "time_in_force": "day",
+        "extended_hours": False,
+        "client_order_id": order.client_order_id,
+        "limit_price": "499.50",
+    }
+    sensitive = "private-provider-diagnostic"
+    rejected_transport = ScriptedTransport(
+        expected=[
+            ExpectedCall(
+                "GET",
+                "/v2/orders:by_client_order_id",
+                response(None, status_code=404),
+                query={"client_order_id": order.client_order_id},
+            ),
+            ExpectedCall(
+                "POST",
+                "/v2/orders",
+                response({"message": sensitive}, status_code=422),
+                body=body,
+            ),
+            ExpectedCall(
+                "GET",
+                "/v2/orders:by_client_order_id",
+                response(None, status_code=404),
+                query={"client_order_id": order.client_order_id},
+            ),
+        ]
+    )
+    with pytest.raises(AlpacaPaperSubmissionRejected) as rejected:
+        adapter(rejected_transport).submit_once(
+            context=armed_context(),
+            order=order,
+            submission_journal_sequence=3,
+        )
+    assert sensitive not in str(rejected.value)
+    assert [item[0] for item in rejected_transport.calls] == ["GET", "POST", "GET"]
+
+    ambiguous_transport = ScriptedTransport(
+        expected=[
+            ExpectedCall(
+                "GET",
+                "/v2/orders:by_client_order_id",
+                response(None, status_code=404),
+                query={"client_order_id": order.client_order_id},
+            ),
+            ExpectedCall(
+                "POST",
+                "/v2/orders",
+                response({"message": sensitive}, status_code=500),
+                body=body,
+            ),
+            ExpectedCall(
+                "GET",
+                "/v2/orders:by_client_order_id",
+                response(None, status_code=404),
+                query={"client_order_id": order.client_order_id},
+            ),
+        ]
+    )
+    with pytest.raises(UnresolvedPaperSubmission) as ambiguous:
+        adapter(ambiguous_transport).submit_once(
+            context=armed_context(),
+            order=order,
+            submission_journal_sequence=4,
+        )
+    assert sensitive not in str(ambiguous.value)
+    assert [item[0] for item in ambiguous_transport.calls].count("POST") == 1
+
+
+def test_non_success_submit_recovers_order_created_by_broker_without_retry() -> None:
+    order = approved_order()
+    body: dict[str, object] = {
+        "symbol": "SPY",
+        "qty": "4",
+        "side": "buy",
+        "type": "limit",
+        "time_in_force": "day",
+        "extended_hours": False,
+        "client_order_id": order.client_order_id,
+        "limit_price": "499.50",
+    }
+    transport = ScriptedTransport(
+        expected=[
+            ExpectedCall(
+                "GET",
+                "/v2/orders:by_client_order_id",
+                response(None, status_code=404),
+                query={"client_order_id": order.client_order_id},
+            ),
+            ExpectedCall(
+                "POST",
+                "/v2/orders",
+                response({"message": "gateway"}, status_code=503),
+                body=body,
+            ),
+            ExpectedCall(
+                "GET",
+                "/v2/orders:by_client_order_id",
+                response(order_payload(order)),
+                query={"client_order_id": order.client_order_id},
+            ),
+        ]
+    )
+    recovered = adapter(transport).submit_once(
+        context=armed_context(),
+        order=order,
+        submission_journal_sequence=5,
+    )
+    assert recovered.client_order_id == order.client_order_id
+    assert [item[0] for item in transport.calls] == ["GET", "POST", "GET"]

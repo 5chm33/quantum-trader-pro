@@ -115,7 +115,7 @@ The engine is finite: it processes a bounded local input and exits. The systemd 
 
 A new strategy must implement the `Strategy` protocol and return only a target fraction plus rationale; it must not submit orders. A new data adapter must emit strictly increasing, timezone-aware `MarketEvent` values with source provenance. A new external broker adapter must preserve deterministic client identity, pre-submit durability, no-blind-retry behavior, per-object payload hashes, pagination, normalized states, and reconciliation.
 
-The current Alpaca adapter is paper-origin-only and has no operator command. Enabling an authenticated paper command still requires a secure credential source, market/session and stale-data controls, kill switches, outage/rate-limit handling, crash and partial-fill drills, and a commit-bound acceptance record. A live-broker adapter remains intentionally unavailable.
+The current Alpaca adapter is paper-origin-only and has no operator command. Its strict credential source, broker calendar and stale-state controls, request budgets, durable journal, no-blind-retry executor, reconciliation, pause/resume/cancel controls, partial-fill projection, cancel-race handling, close/reopen recovery, and transactional failure drills are implemented behind internal interfaces. Enabling an authenticated paper command still requires literal subprocess and service-manager restart tests, disk-exhaustion drills, a validated flatten design, broker-authenticated acceptance evidence tied to an exact commit/configuration/account fingerprint, and operator review. A live-broker adapter remains intentionally unavailable. See [`docs/FAILURE_INJECTION.md`](docs/FAILURE_INJECTION.md) for the executable failure matrix.
 
 ## References
 

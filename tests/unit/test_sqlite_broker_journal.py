@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import sqlite3
 import stat
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
@@ -154,6 +157,59 @@ def fill(order: ApprovedBrokerOrder) -> BrokerFillActivity:
         timestamp=NOW + timedelta(seconds=2),
         raw_payload_sha256=RAW,
     )
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX ownership, mode, and symlink contract")
+def test_broker_journal_rejects_unsafe_paths_and_permissions(tmp_path: Path) -> None:
+    with pytest.raises(BrokerJournalError, match="absolute"):
+        SQLiteBrokerJournal(Path("relative.db"))
+
+    writable_parent = tmp_path / "writable"
+    writable_parent.mkdir(mode=0o700)
+    writable_parent.chmod(0o777)
+    try:
+        with pytest.raises(BrokerJournalError, match="writable"):
+            SQLiteBrokerJournal(writable_parent / "broker.db")
+    finally:
+        writable_parent.chmod(0o700)
+
+    broad_parent = tmp_path / "broad"
+    broad_parent.mkdir(mode=0o700)
+    broad_database = broad_parent / "broker.db"
+    broad_database.write_bytes(b"placeholder")
+    broad_database.chmod(0o644)
+    with pytest.raises(BrokerJournalError, match="0600"):
+        SQLiteBrokerJournal(broad_database)
+
+    corrupt_parent = tmp_path / "corrupt"
+    corrupt_parent.mkdir(mode=0o700)
+    corrupt_database = corrupt_parent / "broker.db"
+    corrupt_database.write_bytes(b"not a sqlite database")
+    corrupt_database.chmod(0o600)
+    with pytest.raises(BrokerJournalError, match="invalid SQLite header"):
+        SQLiteBrokerJournal(corrupt_database)
+
+    directory_parent = tmp_path / "directory-file"
+    directory_parent.mkdir(mode=0o700)
+    (directory_parent / "broker.db").mkdir(mode=0o700)
+    with pytest.raises(BrokerJournalError, match="regular"):
+        SQLiteBrokerJournal(directory_parent / "broker.db")
+
+    real_parent = tmp_path / "real-parent"
+    real_parent.mkdir(mode=0o700)
+    linked_parent = tmp_path / "linked-parent"
+    linked_parent.symlink_to(real_parent, target_is_directory=True)
+    with pytest.raises(BrokerJournalError, match="symlinks"):
+        SQLiteBrokerJournal(linked_parent / "broker.db")
+
+    symlink_parent = tmp_path / "symlink-database"
+    symlink_parent.mkdir(mode=0o700)
+    target = tmp_path / "target.db"
+    target.write_bytes(b"target")
+    target.chmod(0o600)
+    (symlink_parent / "broker.db").symlink_to(target)
+    with pytest.raises(BrokerJournalError, match="symlink"):
+        SQLiteBrokerJournal(symlink_parent / "broker.db")
 
 
 def test_pre_submit_persistence_is_idempotent_and_transition_validated(tmp_path) -> None:
@@ -311,6 +367,76 @@ def test_reconciliation_is_atomic_deduplicated_and_checkpointed(tmp_path) -> Non
             report={"ready": False},
         )
     assert journal.integrity_check() == "ok"
+    journal.close()
+
+
+def test_injected_mid_reconciliation_failure_rolls_back_and_clean_retry_succeeds(
+    tmp_path,
+) -> None:
+    path = tmp_path / "broker.db"
+    journal = SQLiteBrokerJournal(path)
+    approved = approved_order()
+    journal.persist_approved_order(
+        order=approved,
+        requested_payload_sha256=A,
+        timestamp=NOW,
+    )
+    journal.transition_submission(
+        client_order_id=approved.client_order_id,
+        state=SubmissionState.STARTED,
+        timestamp=NOW + timedelta(seconds=1),
+    )
+    fault_connection = sqlite3.connect(path)
+    fault_connection.execute(
+        """
+        CREATE TRIGGER injected_position_failure
+        BEFORE INSERT ON broker_positions
+        BEGIN
+            SELECT RAISE(ABORT, 'injected position failure');
+        END;
+        """
+    )
+    fault_connection.commit()
+    fault_connection.close()
+
+    broker_order = order_snapshot(approved)
+    broker_fill = fill(approved)
+    with pytest.raises(BrokerJournalError, match="transaction failed"):
+        journal.apply_reconciliation(
+            account=account(),
+            orders=(broker_order,),
+            positions=(position(),),
+            fills=(broker_fill,),
+            submission_resolutions={approved.client_order_id: broker_order.broker_order_id},
+            activity_checkpoint=broker_fill.activity_id,
+            timestamp=NOW + timedelta(seconds=4),
+            report={"ready": True, "issues": []},
+        )
+    assert journal.activity_checkpoint() is None
+    assert journal.all_fills() == ()
+    unresolved = journal.unresolved_submissions()
+    assert len(unresolved) == 1
+    assert unresolved[0].state is SubmissionState.STARTED
+    assert journal.integrity_check() == "ok"
+
+    fault_connection = sqlite3.connect(path)
+    fault_connection.execute("DROP TRIGGER injected_position_failure")
+    fault_connection.commit()
+    fault_connection.close()
+    sequence = journal.apply_reconciliation(
+        account=account(),
+        orders=(broker_order,),
+        positions=(position(),),
+        fills=(broker_fill,),
+        submission_resolutions={approved.client_order_id: broker_order.broker_order_id},
+        activity_checkpoint=broker_fill.activity_id,
+        timestamp=NOW + timedelta(seconds=5),
+        report={"ready": True, "issues": []},
+    )
+    assert sequence == 1
+    assert journal.activity_checkpoint() == broker_fill.activity_id
+    assert len(journal.all_fills()) == 1
+    assert journal.unresolved_submissions() == ()
     journal.close()
 
 

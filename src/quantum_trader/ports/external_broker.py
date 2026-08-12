@@ -18,6 +18,18 @@ from quantum_trader.domain.brokerage import (
 from quantum_trader.domain.execution import ArmedExecutionContext, ExecutionMode
 
 
+class ExternalBrokerError(RuntimeError):
+    """Base failure for normalized external broker operations."""
+
+
+class ExternalSubmissionAmbiguous(ExternalBrokerError):
+    """A submission may have reached the broker but cannot yet be resolved."""
+
+
+class ExternalSubmissionRejected(ExternalBrokerError):
+    """A submission is known not to have created a broker order."""
+
+
 class ExternalBroker(Protocol):
     """Normalized broker operations required for idempotent paper execution."""
 

@@ -417,3 +417,88 @@ def test_reconciliation_rejects_stalled_pagination_and_wrong_broker_identity(tmp
             activity_after=NOW - timedelta(days=1),
         )
     journal.close()
+
+
+def test_partial_fills_reconcile_exactly_once_across_restart(tmp_path) -> None:
+    approved = approved_order()
+    normalized_order = broker_order(approved)
+    first_fill = replace(
+        fill(approved, client_order_id=approved.client_order_id),
+        activity_id="20260812143000000::execution-partial-1",
+        execution_id="20260812143000000::execution-partial-1",
+        quantity=Decimal("1"),
+        price=Decimal("499.75"),
+        fee=Decimal("0.01"),
+        timestamp=NOW + timedelta(seconds=1),
+    )
+    second_fill = replace(
+        fill(approved, client_order_id=approved.client_order_id),
+        activity_id="20260812143000000::execution-partial-2",
+        execution_id="20260812143000000::execution-partial-2",
+        quantity=Decimal("3"),
+        price=Decimal("500.25"),
+        fee=Decimal("0.03"),
+        timestamp=NOW + timedelta(seconds=2),
+    )
+    path = tmp_path / "broker.db"
+    journal = SQLiteBrokerJournal(path)
+    journal.persist_approved_order(
+        order=approved,
+        requested_payload_sha256=A,
+        timestamp=NOW,
+    )
+    journal.transition_submission(
+        client_order_id=approved.client_order_id,
+        state=SubmissionState.STARTED,
+        timestamp=NOW + timedelta(milliseconds=1),
+    )
+    page = BrokerActivityPage(
+        activities=(first_fill, second_fill),
+        next_page_token=None,
+        raw_payload_sha256=RAW,
+    )
+    broker = FakeBroker(
+        account_snapshot=account(),
+        positions=(position(),),
+        orders_by_client={approved.client_order_id: normalized_order},
+        orders_by_id={normalized_order.broker_order_id: normalized_order},
+        activity_pages={None: page},
+    )
+    report = PaperReconciler(
+        broker=broker,
+        journal=journal,
+        strategy_namespace="qtpro-paper",
+        activity_after=NOW - timedelta(days=1),
+    ).reconcile(timestamp=NOW + timedelta(minutes=2))
+    assert report.ready is True
+    assert report.new_execution_count == 2
+    assert report.expected_positions == {"SPY": Decimal("4")}
+    assert [item.execution_id for item in journal.all_fills()] == [
+        first_fill.execution_id,
+        second_fill.execution_id,
+    ]
+    assert journal.activity_checkpoint() == second_fill.activity_id
+    assert (
+        journal.submission_by_client_id(approved.client_order_id).state
+        is SubmissionState.RECONCILED
+    )  # type: ignore[union-attr]
+    journal.close()
+
+    reopened = SQLiteBrokerJournal(path)
+    restarted_broker = replace(
+        broker,
+        requested_page_tokens=[],
+        activity_pages={},
+    )
+    repeated = PaperReconciler(
+        broker=restarted_broker,
+        journal=reopened,
+        strategy_namespace="qtpro-paper",
+        activity_after=NOW - timedelta(days=1),
+    ).reconcile(timestamp=NOW + timedelta(minutes=3))
+    assert repeated.ready is True
+    assert repeated.new_execution_count == 0
+    assert restarted_broker.requested_page_tokens == [second_fill.activity_id]
+    assert len(reopened.all_fills()) == 2
+    assert sum(item.quantity for item in reopened.all_fills()) == Decimal("4")
+    reopened.close()
