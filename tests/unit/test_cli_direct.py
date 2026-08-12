@@ -64,9 +64,30 @@ def test_cli_preflight_and_version(capsys: pytest.CaptureFixture[str]) -> None:
     preflight = json.loads(capsys.readouterr().out)
     assert preflight["allowed_modes"] == ["simulation"]
     assert preflight["network_required"] is False
+    assert preflight["one_click_demo"] is True
 
     assert main(["version"]) == 0
     assert capsys.readouterr().out.strip() == "0.1.0"
+
+
+def test_cli_demo_runs_from_bundled_data(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output = tmp_path / "demo"
+
+    assert main(["demo", "--output", str(output)]) == 0
+    summary = json.loads(capsys.readouterr().out)
+
+    assert summary["status"] == "completed"
+    assert summary["mode"] == "simulation"
+    assert summary["events"] == 252
+    assert summary["risk_halted"] is False
+    assert (output / "events.sqlite3").is_file()
+    assert (output / "simulation_report.md").is_file()
+    assert (output / "simulation_report.json").is_file()
+    assert (output / "equity_curve.csv").is_file()
+    assert (output / "fills.csv").is_file()
 
 
 def test_cli_runs_and_protects_existing_artifacts(

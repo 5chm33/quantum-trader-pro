@@ -40,10 +40,10 @@ jobs:
           python -m pip install -e '.[dev]'
 
       - name: Check formatting
-        run: ruff format --check src tests
+        run: ruff format --check src tests scripts launch_demo.py
 
       - name: Lint
-        run: ruff check src tests
+        run: ruff check src tests scripts launch_demo.py
 
       - name: Type check
         run: mypy src
@@ -52,19 +52,58 @@ jobs:
         run: pytest --cov=quantum_trader --cov-report=term-missing
 
       - name: Scan source for security issues
-        run: bandit -q -r src
+        run: bandit -q -r src launch_demo.py
 
       - name: Validate deployment and documentation assets
         run: |
-          bash -n scripts/run-cloud-simulation.sh
+          bash -n launch_demo.sh scripts/run-cloud-simulation.sh
+          python -m py_compile launch_demo.py scripts/check-doc-links.py scripts/verify-demo-output.py
           python scripts/check-doc-links.py
 
       - name: Build source and wheel distributions
         run: python -m build
 
-      - name: Verify installed wheel safety preflight
+      - name: Verify installed wheel safety and bundled demo
         run: |
           python -m venv /tmp/qtp-wheel
           /tmp/qtp-wheel/bin/python -m pip install --upgrade pip
           /tmp/qtp-wheel/bin/python -m pip install dist/*.whl
           /tmp/qtp-wheel/bin/quantum-trader preflight
+          /tmp/qtp-wheel/bin/quantum-trader demo --output /tmp/qtp-wheel-demo
+          python scripts/verify-demo-output.py /tmp/qtp-wheel-demo
+
+  launchers:
+    name: Launcher ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run portable Python launcher
+        run: python launch_demo.py --output ci-demo-python
+
+      - name: Verify portable Python output
+        run: python scripts/verify-demo-output.py ci-demo-python
+
+      - name: Run Unix double-click wrapper
+        if: runner.os != 'Windows'
+        run: ./launch_demo.sh --output ci-demo-wrapper
+
+      - name: Run Windows double-click wrapper
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: launch_demo.cmd --output ci-demo-wrapper
+
+      - name: Verify wrapper output
+        run: python scripts/verify-demo-output.py ci-demo-wrapper

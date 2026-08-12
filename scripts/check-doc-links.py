@@ -21,8 +21,8 @@ def target_path(document: Path, raw_target: str) -> Path | None:
     target = target.split("#", 1)[0]
     if not target:
         return None
-    if " \"" in target:
-        target = target.split(" \"", 1)[0]
+    if ' "' in target:
+        target = target.split(' "', 1)[0]
     return (document.parent / unquote(target)).resolve()
 
 

@@ -47,7 +47,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-quantum_trader = ["py.typed"]
+quantum_trader = ["py.typed", "data/*.csv"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"

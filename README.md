@@ -70,13 +70,27 @@ The same input and configuration were executed independently twice. The generate
 
 The architecture uses ports and adapters so market data, brokerage, and persistence remain outside the domain model. The strategy never calls a broker directly. The engine records the market event, reconciles existing fills, marks the portfolio, evaluates circuit breakers, generates a signal, translates it into an intent, applies risk policy, and only then hands an approved order to the simulated broker.
 
-The current implementation is deliberately finite rather than an always-on market daemon. A system service can schedule or launch a simulation job, but there is no credential path, production endpoint, or live order route. See [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SAFETY.md`](SAFETY.md), and [`THREAT_MODEL.md`](THREAT_MODEL.md) for the complete design boundary; [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the hardened cloud-computer installation.
+The current implementation is deliberately finite rather than an always-on market daemon. A system service can schedule or launch a simulation job, but there is no credential path, production endpoint, or live order route. See [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SAFETY.md`](SAFETY.md), and [`THREAT_MODEL.md`](THREAT_MODEL.md) for the current design boundary. The in-progress A+ expansion is governed by [`docs/LIVE_READINESS.md`](docs/LIVE_READINESS.md) and [`docs/BROKER_THREAT_MODEL.md`](docs/BROKER_THREAT_MODEL.md); [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) covers the hardened cloud-computer installation.
 
 ---
 
-## Getting Started
+## One-Click Demo
 
-Quantum Trader Pro requires Python 3.11 or newer and has no third-party runtime dependency. Development tooling is isolated in the optional `dev` dependency group.
+Quantum Trader Pro requires **Python 3.11 or newer**, but the offline demo requires no package installation, data download, account, API key, or broker connection. Download and extract the latest [release zip](https://github.com/5chm33/quantum-trader-pro/releases/latest), then use the launcher for your operating system:
+
+| Operating system | One-click action |
+|---|---|
+| Windows | Double-click **`launch_demo.cmd`** |
+| macOS or Linux | Double-click **`launch_demo.sh`**, or run `./launch_demo.sh` |
+| Any platform with Python | Run `python launch_demo.py` |
+
+The launcher processes the bundled, clearly labeled synthetic fixture and creates a unique folder under `quantum-trader-demo-runs/` containing the SQLite ledger, reports, equity curve, and fills. It can only invoke `simulation`; it contains no paper/live endpoint or credential path.
+
+If Python is not installed, use the official installer from [python.org](https://www.python.org/downloads/), enable the Windows “Add Python to PATH” option, and run the launcher again.
+
+## Developer Installation
+
+Development tooling is isolated in the optional `dev` dependency group.
 
 ```bash
 git clone https://github.com/5chm33/quantum-trader-pro.git
@@ -85,23 +99,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e '.[dev]'
-```
-
-Verify the safety boundary:
-
-```bash
 quantum-trader preflight
-```
-
-Run the bundled **synthetic smoke-test fixture**:
-
-```bash
-quantum-trader simulate \
-  --data tests/fixtures/legacy_synthetic_daily.csv \
-  --output artifacts/smoke \
-  --symbol DEMO \
-  --fast-window 5 \
-  --slow-window 15
+quantum-trader demo
 ```
 
 For research, provide a real local CSV with the required columns shown below. Rows must be strictly increasing, prices must form a valid OHLC bar, volume must be non-negative, and timestamps must be ISO-8601 values. Naive timestamps are interpreted as UTC by default.

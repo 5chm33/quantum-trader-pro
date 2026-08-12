@@ -1,4 +1,4 @@
-"""Command-line interface for offline deterministic simulation only."""
+"""Command-line interface for deterministic trading research workflows."""
 
 from __future__ import annotations
 
@@ -6,8 +6,9 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from importlib.resources import as_file, files
 from pathlib import Path
 
 from quantum_trader import __version__
@@ -36,9 +37,22 @@ def decimal_argument(value: str) -> Decimal:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="quantum-trader",
-        description="Deterministic, simulation-only trading research engine.",
+        description="Deterministic trading research engine with an offline-safe default.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    demo = subparsers.add_parser(
+        "demo",
+        help="Run the bundled offline demo with no data download or broker credentials.",
+    )
+    demo.add_argument(
+        "--output",
+        type=Path,
+        help=(
+            "Optional artifact directory; the default is a unique folder under the current "
+            "directory."
+        ),
+    )
 
     simulate = subparsers.add_parser(
         "simulate",
@@ -69,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Replace only existing simulation artifacts inside the chosen output directory.",
     )
 
-    subparsers.add_parser("preflight", help="Verify the local simulation safety boundary.")
+    subparsers.add_parser("preflight", help="Verify the local safety boundary and launch support.")
     subparsers.add_parser("version", help="Print the installed package version.")
     return parser
 
@@ -78,6 +92,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = parser.parse_args(argv)
     try:
+        if arguments.command == "demo":
+            return _demo(arguments)
         if arguments.command == "simulate":
             return _simulate(arguments)
         if arguments.command == "preflight":
@@ -89,6 +105,34 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (FileNotFoundError, RuntimeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def _demo(arguments: argparse.Namespace) -> int:
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    output_dir = arguments.output or Path.cwd() / "quantum-trader-demo-runs" / timestamp
+    resource = files("quantum_trader").joinpath("data", "demo_daily.csv")
+    with as_file(resource) as data_path:
+        simulation_arguments = argparse.Namespace(
+            data=data_path,
+            output=output_dir,
+            symbol="DEMO",
+            mode="simulation",
+            initial_cash=Decimal("100000"),
+            fast_window=20,
+            slow_window=50,
+            invested_fraction=Decimal("0.25"),
+            slippage_bps=Decimal("2"),
+            fee_per_order=Decimal("0"),
+            fee_per_share=Decimal("0.005"),
+            max_position_fraction=Decimal("0.25"),
+            max_order_notional=Decimal("25000"),
+            min_cash_reserve_fraction=Decimal("0.05"),
+            max_drawdown_fraction=Decimal("0.30"),
+            max_realized_loss=Decimal("10000"),
+            maximum_gap_days=7,
+            overwrite=False,
+        )
+        return _simulate(simulation_arguments)
 
 
 def _simulate(arguments: argparse.Namespace) -> int:
@@ -195,6 +239,7 @@ def _preflight() -> int:
         "broker_credentials_required": False,
         "live_trading_implemented": False,
         "paper_trading_implemented": False,
+        "one_click_demo": True,
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

@@ -36,6 +36,7 @@ secrets*
 /data/
 artifacts/
 runs/
+quantum-trader-demo-runs/
 .tmp/
 *.db
 *.db-*
