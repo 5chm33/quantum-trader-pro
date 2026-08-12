@@ -13,7 +13,8 @@ from typing import Any
 from quantum_trader.domain.execution import ArmedExecutionContext, ExecutionMode
 from quantum_trader.domain.models import OrderIntent, RiskDecision, Side
 
-CLIENT_ORDER_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,48}$")
+OWNED_CLIENT_ORDER_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,48}$")
+BROKER_CLIENT_ORDER_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
 
 class AccountStatus(StrEnum):
@@ -74,6 +75,11 @@ def _aware(value: datetime, field_name: str) -> None:
         raise ValueError(f"{field_name} must be timezone-aware")
 
 
+def _finite(value: Decimal, field_name: str) -> None:
+    if not value.is_finite():
+        raise ValueError(f"{field_name} must be finite")
+
+
 def _nonnegative(value: Decimal, field_name: str) -> None:
     if value < 0 or not value.is_finite():
         raise ValueError(f"{field_name} must be finite and nonnegative")
@@ -122,7 +128,7 @@ def deterministic_client_order_id(
     ).hexdigest()[:24]
     prefix = re.sub(r"[^a-z0-9_-]", "-", namespace)[:12]
     client_order_id = f"qt-{prefix}-{digest}"
-    if not CLIENT_ORDER_ID_PATTERN.fullmatch(client_order_id):
+    if not OWNED_CLIENT_ORDER_ID_PATTERN.fullmatch(client_order_id):
         raise ValueError("derived client_order_id violates the broker-safe format")
     return client_order_id
 
@@ -146,7 +152,7 @@ class BrokerAccountSnapshot:
             raise ValueError("broker account environment must be paper or live")
         _sha256(self.account_sha256, "account_sha256")
         _sha256(self.raw_payload_sha256, "raw_payload_sha256")
-        _nonnegative(self.cash, "cash")
+        _finite(self.cash, "cash")
         _nonnegative(self.equity, "equity")
         _nonnegative(self.buying_power, "buying_power")
         _aware(self.captured_at, "captured_at")
@@ -159,6 +165,7 @@ class BrokerAccountSnapshot:
             and not self.account_blocked
             and not self.transfers_blocked
             and self.buying_power > 0
+            and self.cash >= 0
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -304,7 +311,7 @@ class ApprovedBrokerOrder:
         )
 
     def __post_init__(self) -> None:
-        if not CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
+        if not OWNED_CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
             raise ValueError("client_order_id has invalid characters or length")
         if self.quantity <= 0:
             raise ValueError("broker order quantity must be positive")
@@ -359,7 +366,7 @@ class BrokerOrderSnapshot:
     def __post_init__(self) -> None:
         if not self.broker_order_id:
             raise ValueError("broker_order_id must not be empty")
-        if not CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
+        if not BROKER_CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
             raise ValueError("client_order_id has invalid characters or length")
         _positive(self.quantity, "quantity")
         _nonnegative(self.filled_quantity, "filled_quantity")
@@ -408,12 +415,12 @@ class BrokerFillActivity:
     activity_id: str
     execution_id: str
     broker_order_id: str
-    client_order_id: str
+    client_order_id: str | None
     symbol: str
     side: Side
     quantity: Decimal
     price: Decimal
-    fee: Decimal
+    fee: Decimal | None
     timestamp: datetime
     raw_payload_sha256: str
 
@@ -421,11 +428,14 @@ class BrokerFillActivity:
         for name in ("activity_id", "execution_id", "broker_order_id"):
             if not getattr(self, name):
                 raise ValueError(f"{name} must not be empty")
-        if not CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
+        if self.client_order_id is not None and not BROKER_CLIENT_ORDER_ID_PATTERN.fullmatch(
+            self.client_order_id
+        ):
             raise ValueError("client_order_id has invalid characters or length")
         _positive(self.quantity, "quantity")
         _positive(self.price, "price")
-        _nonnegative(self.fee, "fee")
+        if self.fee is not None:
+            _nonnegative(self.fee, "fee")
         _aware(self.timestamp, "timestamp")
         _sha256(self.raw_payload_sha256, "raw_payload_sha256")
 
@@ -439,7 +449,7 @@ class BrokerFillActivity:
             "side": self.side.value,
             "quantity": str(self.quantity),
             "price": str(self.price),
-            "fee": str(self.fee),
+            "fee": str(self.fee) if self.fee is not None else None,
             "timestamp": self.timestamp.isoformat(),
             "raw_payload_sha256": self.raw_payload_sha256,
         }
@@ -504,7 +514,7 @@ class SubmissionJournalEntry:
     def __post_init__(self) -> None:
         if self.sequence <= 0:
             raise ValueError("submission journal sequence must be positive")
-        if not CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
+        if not OWNED_CLIENT_ORDER_ID_PATTERN.fullmatch(self.client_order_id):
             raise ValueError("client_order_id has invalid characters or length")
         _sha256(self.requested_payload_sha256, "requested_payload_sha256")
         _aware(self.created_at, "created_at")

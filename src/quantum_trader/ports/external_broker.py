@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Protocol
 
 from quantum_trader.domain.brokerage import (
@@ -66,7 +67,7 @@ class ExternalBroker(Protocol):
     def list_fill_activities(
         self,
         *,
-        after_activity_id: str | None,
+        after: datetime | None,
         page_token: str | None,
         page_size: int,
     ) -> BrokerActivityPage:

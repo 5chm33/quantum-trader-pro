@@ -29,10 +29,11 @@ The repository now models `simulation`, `paper`, and `live` as explicit identiti
 | Normalized account/clock/order/fill/activity contracts | Implemented | Validation and transition-state unit tests |
 | Deterministic client order ID | Implemented | Stable namespace/account/intent identity tests |
 | Durable submission-journal contract | Implemented | Persisted/acknowledged/ambiguous/reconciled state invariants |
-| Paper network adapter | **Not yet implemented** | No credential loader, endpoint client, or external submission command exists |
-| Live execution | **Unavailable** | Gate and preflight report explicitly reject live execution |
+| Alpaca paper adapter | Implemented but not operator-enabled | Fixed `https://paper-api.alpaca.markets` origin, injectable HTTPS transport, normalized reads, one-submit idempotency, client-ID timeout recovery, verified cancellation, and activity pagination |
+| Paper credentials and command | **Not yet enabled** | No repository command loads credentials or submits an external order; authenticated paper acceptance evidence is still absent |
+| Live execution | **Unavailable** | Gate and preflight report explicitly reject live execution; the adapter rejects the live origin |
 
-This status is intentionally narrower than “paper-ready.” The next phases must implement the sandbox adapter, durable journal storage, reconciliation, market/session controls, kill switches, and failure-injection evidence before a paper command can exist.
+This status is intentionally narrower than “paper-ready.” The next phases must implement durable journal storage, complete account/order/fill/position reconciliation, market/session controls, kill switches, secret acquisition, and failure-injection evidence before a paper command can exist. The current adapter is exercised only through deterministic transport fixtures because the configured external account preflight was not authenticated; no broker order was attempted.
 
 ## Non-Negotiable Invariants
 

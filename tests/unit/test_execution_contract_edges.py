@@ -254,8 +254,10 @@ def test_account_clock_and_position_contracts_reject_impossible_state() -> None:
     assert account.as_dict()["permits_new_exposure"] is True
     with pytest.raises(ValueError, match="paper or live"):
         replace(account, environment=ExecutionMode.SIMULATION)
-    with pytest.raises(ValueError, match="nonnegative"):
-        replace(account, cash=Decimal("-1"))
+    margin_account = replace(account, cash=Decimal("-1"))
+    assert margin_account.permits_new_exposure is False
+    with pytest.raises(ValueError, match="finite"):
+        replace(account, cash=Decimal("NaN"))
 
     with pytest.raises(ValueError, match="future next_close"):
         BrokerClockSnapshot(

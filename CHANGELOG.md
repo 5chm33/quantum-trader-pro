@@ -17,6 +17,8 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Explicit simulation/paper/live profile identities with a separate availability gate, expiring paper-only arming records, exact acknowledgment, and code/configuration/account/namespace fingerprint binding.
 - Normalized broker account, clock, position, approved-order, order-state, fill-activity, pagination, cancellation, and durable submission-journal contracts.
 - Deterministic broker-safe client order IDs and a fail-closed transition validator covering duplicate updates, partial fills, cancel races, terminal states, and out-of-order regressions.
+- Fixed-origin Alpaca paper adapter with standard-library HTTPS transport, normalized account/clock/position/order/activity reads, deterministic one-submit behavior, client-ID timeout recovery, verified cancellation outcomes, and official activity pagination.
+- Redacted paper credentials and HTTP errors, strict sandbox-origin/path allowlisting, canonical request bodies, lowercase boolean query encoding, and raw response hashes.
 
 ### Changed
 
@@ -25,11 +27,11 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Made the single-instance lock native on both Windows and POSIX.
 - Updated GitHub Actions to validate source, installed wheel, and one-click wrappers on Windows, macOS, and Linux.
 - Replaced the obsolete single-SPY headline evaluation with the preregistered six-asset negative result while retaining v0.1.0 as historical engineering evidence.
-- Kept every existing replay and one-click command simulation-only; paper network execution remains unimplemented and the live gate always rejects.
+- Kept every existing replay and one-click command simulation-only; the paper adapter is not operator-enabled, its configured external preflight remains unauthenticated, and the live gate always rejects.
 
 ### Validation
 
-- Expanded the local suite to 67 passing tests with 91.31% branch coverage after the execution-arming and broker-contract phase.
+- Expanded the local suite to 81 passing tests with 90.21% branch coverage after the fixed-sandbox paper-adapter phase.
 - Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
 - Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
 - Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.
