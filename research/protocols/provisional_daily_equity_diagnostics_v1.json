@@ -33,7 +33,8 @@
       "annualization_observations": 252,
       "minimum_exposure_multiplier": "0.00",
       "maximum_exposure_multiplier": "1.50",
-      "description": "Causally scaled equal-weight basket using the same declared trailing-window, target, and cap conventions as the H04 candidate."
+      "rebalance_frequency_bars": 21,
+      "description": "Causally scaled equal-weight basket using the same declared trailing-window, target, cap, and 21-bar rebalancing conventions as the H04 candidate."
     }
   },
   "attribution": {

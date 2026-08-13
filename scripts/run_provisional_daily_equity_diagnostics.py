@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from statistics import fmean
@@ -17,6 +18,7 @@ from typing import Any
 
 from run_provisional_daily_equity import (
     DailyBar,
+    PortfolioTrack,
     _annualized_volatility,
     _candidate_weights,
     _decimal_text,
@@ -180,6 +182,7 @@ def _diagnostics(
     )
     cash_plus_spy = tuple(Decimal("0.60") * value for value in spy_returns)
     volatility_matched_equal = _volatility_matched_equal_weight(
+        diagnostic_protocol=diagnostic_protocol,
         parent_protocol=parent_protocol,
         bars_by_symbol=bars_by_symbol,
         first_index=first_index,
@@ -211,8 +214,8 @@ def _diagnostics(
                 _zero_turnover(cash_plus_spy),
             ),
             "volatility_matched_equal_weight": _metrics(
-                volatility_matched_equal,
-                _zero_turnover(volatility_matched_equal),
+                volatility_matched_equal.returns,
+                volatility_matched_equal.turnovers,
             ),
         },
         "return_attribution": _attribution(
@@ -269,17 +272,22 @@ def _parent_tracks(
 
 def _volatility_matched_equal_weight(
     *,
+    diagnostic_protocol: dict[str, Any],
     parent_protocol: dict[str, Any],
     bars_by_symbol: dict[str, tuple[DailyBar, ...]],
     first_index: int,
     last_index: int,
-) -> tuple[Decimal, ...]:
+) -> PortfolioTrack:
     specification = parent_protocol["candidate"]
     window = int(specification["volatility_window_bars"])
     minimum_observations = int(specification["minimum_volatility_observations"])
     target = Decimal(str(specification["target_annualized_volatility"]))
     lower = Decimal(str(specification["minimum_exposure_multiplier"]))
     upper = Decimal(str(specification["maximum_exposure_multiplier"]))
+    benchmark = diagnostic_protocol["benchmark_alignment"]["volatility_matched"]
+    rebalance_frequency = int(benchmark["rebalance_frequency_bars"])
+    if rebalance_frequency != int(specification["rebalance_frequency_bars"]):
+        raise DiagnosticRunError("volatility-matched benchmark rebalancing differs from parent")
     symbols = tuple(str(value) for value in parent_protocol["data"]["universe"])
     equal_weight_returns = _equal_weight_rebalanced_returns(
         symbols=symbols,
@@ -287,18 +295,36 @@ def _volatility_matched_equal_weight(
         last_index=last_index,
     )
     output: list[Decimal] = []
+    turnovers: list[Decimal] = []
+    timestamps: list[datetime] = []
+    multiplier = _ONE
+    prior_multiplier: Decimal | None = None
+    reference_symbol = symbols[0]
     for index in range(first_index, last_index + 1):
-        history = tuple(
-            equal_weight_returns[position - 1] for position in range(index - window + 1, index + 1)
-        )
-        if len(history) < minimum_observations:
-            multiplier = _ONE
+        if (index - first_index) % rebalance_frequency == 0:
+            history = tuple(
+                equal_weight_returns[position - 1]
+                for position in range(index - window + 1, index + 1)
+            )
+            if len(history) < minimum_observations:
+                multiplier = _ONE
+            else:
+                realized = _annualized_volatility(history)
+                multiplier = _ONE if realized == _ZERO else target / realized
+                multiplier = min(upper, max(lower, multiplier))
+            turnover = _ZERO if prior_multiplier is None else abs(multiplier - prior_multiplier)
+            prior_multiplier = multiplier
         else:
-            realized = _annualized_volatility(history)
-            multiplier = _ONE if realized == _ZERO else target / realized
-            multiplier = min(upper, max(lower, multiplier))
+            turnover = _ZERO
         output.append(multiplier * equal_weight_returns[index])
-    return tuple(output)
+        turnovers.append(turnover)
+        timestamps.append(bars_by_symbol[reference_symbol][index + 1].timestamp)
+    return PortfolioTrack(
+        name="volatility_matched_equal_weight",
+        returns=tuple(output),
+        turnovers=tuple(turnovers),
+        timestamps=tuple(timestamps),
+    )
 
 
 def _equal_weight_rebalanced_returns(
@@ -328,33 +354,43 @@ def _asset_level(
     last_index: int,
 ) -> list[dict[str, Any]]:
     candidate = parent_protocol["candidate"]
+    rebalance_frequency = int(candidate["rebalance_frequency_bars"])
     results = []
     for symbol in tuple(str(value) for value in parent_protocol["data"]["universe"]):
         candidate_returns: list[Decimal] = []
+        candidate_turnovers: list[Decimal] = []
         buy_hold_returns: list[Decimal] = []
+        weight = _ZERO
+        prior_weight: Decimal | None = None
         for index in range(first_index, last_index + 1):
-            weight = _candidate_weights(
-                symbols=(symbol,),
-                bars_by_symbol=bars_by_symbol,
-                index=index,
-                lookback=int(candidate["lookback_bars"]),
-                volatility_window=int(candidate["volatility_window_bars"]),
-                minimum_observations=int(candidate["minimum_volatility_observations"]),
-                target_volatility=Decimal(str(candidate["target_annualized_volatility"])),
-                multiplier_minimum=Decimal(str(candidate["minimum_exposure_multiplier"])),
-                multiplier_maximum=Decimal(str(candidate["maximum_exposure_multiplier"])),
-            )[symbol]
+            if (index - first_index) % rebalance_frequency == 0:
+                weight = _candidate_weights(
+                    symbols=(symbol,),
+                    bars_by_symbol=bars_by_symbol,
+                    index=index,
+                    lookback=int(candidate["lookback_bars"]),
+                    volatility_window=int(candidate["volatility_window_bars"]),
+                    minimum_observations=int(candidate["minimum_volatility_observations"]),
+                    target_volatility=Decimal(str(candidate["target_annualized_volatility"])),
+                    multiplier_minimum=Decimal(str(candidate["minimum_exposure_multiplier"])),
+                    multiplier_maximum=Decimal(str(candidate["maximum_exposure_multiplier"])),
+                )[symbol]
+                turnover = _ZERO if prior_weight is None else abs(weight - prior_weight)
+                prior_weight = weight
+            else:
+                turnover = _ZERO
             one_day_return = _return(
                 bars_by_symbol[symbol][index], bars_by_symbol[symbol][index + 1]
             )
             candidate_returns.append(weight * one_day_return)
+            candidate_turnovers.append(turnover)
             buy_hold_returns.append(one_day_return)
         results.append(
             {
                 "symbol": symbol,
                 "h01_h04_single_asset_sleeve": _metrics(
                     tuple(candidate_returns),
-                    _zero_turnover(tuple(candidate_returns)),
+                    tuple(candidate_turnovers),
                 ),
                 "buy_and_hold_adjusted_price_proxy": _metrics(
                     tuple(buy_hold_returns),
