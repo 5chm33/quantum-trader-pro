@@ -1,6 +1,8 @@
 # Phase 14 Options Data-Readiness Decision
 
-**Decision:** **BLOCKED — no options falsification attempt is registered or run.**
+**Decision for options campaigns:** **BLOCKED — no options falsification attempt is registered or run.**
+
+**Scope boundary:** This is not a prerequisite for the current daily-equity-only evidence path. Historical OPRA-quality data becomes mandatory only when an option affects a registered signal, portfolio allocation, execution, cost model, lifecycle rule, benchmark, or performance claim.
 
 The repository has implemented defined-risk structures, Greeks input contracts, partial-fill accounting, and explicit exercise, assignment, expiry, and adjustment receipts. Those controls make an options campaign safer to evaluate; they do not create the historical market data required to evaluate one. Phase 14 therefore stops before candidate registration rather than backfilling prices, assuming theoretical fills, or treating current chains as historical evidence.
 
