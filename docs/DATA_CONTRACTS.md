@@ -132,7 +132,7 @@ Schema validation is necessary but insufficient. An experiment snapshot is rejec
 
 ## Implementation Boundary
 
-These schemas do not claim that a licensed options dataset has been acquired or that an options strategy has been validated. They define the minimum evidence any later provider adapter must produce. The public CLI remains simulation-only, the existing v1 holdout remains sealed, authenticated paper activation remains blocked, and live execution remains unavailable.
+These schemas do not claim that a licensed options dataset has been acquired or that an options strategy has been validated. They define the minimum evidence any later provider adapter must produce. The implemented SEC, Treasury, local equity, corporate-action, and immutable snapshot adapters are documented in [`REFERENCE_INGESTION.md`](REFERENCE_INGESTION.md); their existence does not establish a provider's historical publication-time policy or validate a strategy. The public CLI remains simulation-only, the existing v1 holdout remains sealed, authenticated paper activation remains blocked, and live execution remains unavailable.
 
 ## References
 

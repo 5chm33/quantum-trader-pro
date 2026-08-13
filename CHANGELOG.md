@@ -11,10 +11,12 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Provider-neutral, hash-pinned point-in-time data-contract catalog covering equity bars, universes, fundamentals, earnings, corporate actions, option instruments, quotes, trades, Greeks, rate curves, dividends, volatility surfaces, sessions, borrow, and immutable snapshot manifests.
 - Hardened append-only SQLite experiment ledger with bounded candidate registration, frozen preregistration, retained completed/failed/aborted attempts, artifact hashes, complete comparison barriers, candidate-bound one-time holdouts, expiring approvals, retrieved-snapshot binding, event-chain and projection digests, restart verification, and secure mode-`0600` storage.
 - Public experiment-ledger specification explaining evidence lifecycle, anti-contamination controls, integrity model, and the explicit distinction between research governance and a performance claim.
+- Read-only, point-in-time SEC company-facts/submissions, Treasury par-curve, local equity-bar, and local corporate-action adapters with explicit availability/provenance enforcement, plus an immutable canonical JSONL snapshot writer and checksummed manifest bound to a decision cutoff and holdout boundaries.
+- Public reference-ingestion specification documenting total-return, publication-time, source licensing, corporate-action, and immutable-snapshot limitations; official SEC and Treasury adapter mechanics were exercised with redacted receipts only, not strategy data.
 
 ### Validation
 
-- Expanded the locked suite to **181 passing tests** with **90.14% branch coverage** after experiment-ledger lifecycle, tamper, restart, secure-path, comparison, and holdout-boundary coverage.
+- Expanded the locked suite to **213 passing tests** with **90.18% branch coverage** after experiment-ledger lifecycle, tamper, restart, secure-path, comparison, holdout-boundary, point-in-time ingestion, source-schema, causal timestamp, and immutable snapshot coverage.
 - Re-ran formatting, strict typing, security checks, strategy-governance verification, point-in-time contract verification, locked dependency checks, package build, installed preflight, and the one-click simulation without enabling paper or live execution.
 - Retained the prior preregistered negative result unchanged: the existing moving-average campaign failed pre-holdout promotion and its original holdout remains sealed.
 
