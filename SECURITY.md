@@ -26,12 +26,17 @@ The maintainer will acknowledge a complete report when reasonably possible, repr
 | Unsafe filesystem writes | Attacks requiring prior root control of the host |
 | Ledger/report integrity flaws | Vulnerabilities solely in unsupported historical files |
 | Dependency or CI compromise | Social engineering unrelated to this repository |
-| Secret leakage in source or artifacts | Broker integration, because none is implemented |
+| Secret leakage in source or artifacts | Authenticated paper-broker behavior not yet enabled by a public command |
+| Fixed-origin paper adapter, durable journal, recovery, and operator-control bypass | Real-money execution, because no live adapter or command exists |
 | Denial of service from crafted input | Feature requests without a security impact |
 
 ## Credential Incident Procedure
 
-Quantum Trader Pro requires no secret. If a credential is nevertheless committed or attached to an issue, treat it as compromised immediately: revoke and rotate it, remove it from the current tree, assess repository history and cached artifacts, invalidate dependent sessions, and document the incident without reproducing the secret value.
+The public simulation path requires no secret. Optional internal paper components accept only strict out-of-band credential files and have no public command. If any credential is committed or attached to an issue, treat it as compromised immediately: revoke and rotate it, remove it from the current tree, assess repository history and cached artifacts, invalidate dependent sessions, and document the incident without reproducing the secret value.
+
+## Supply-Chain Controls
+
+The cross-platform development graph is committed in `uv.lock`, and both local acceptance and protected Python jobs reject lock drift. External GitHub Actions are pinned to immutable 40-character commit SHAs. The protected Python 3.12 job exports the locked graph, audits it for known vulnerabilities, generates a CycloneDX SBOM, and retains both files as workflow artifacts. These controls reduce drift and mutable-tag risk but do not eliminate registry, runner, dependency, or zero-day compromise.
 
 ## Safe-Harbor Intent
 

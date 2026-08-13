@@ -482,3 +482,59 @@ def test_duplicate_fill_can_enrich_missing_client_ownership_once(tmp_path) -> No
             report={"ready": False},
         )
     journal.close()
+
+
+def test_simulated_storage_exhaustion_rolls_back_and_recovers(tmp_path) -> None:
+    path = tmp_path / "broker.db"
+    journal = SQLiteBrokerJournal(path)
+    approved = approved_order()
+    journal.persist_approved_order(
+        order=approved,
+        requested_payload_sha256=A,
+        timestamp=NOW,
+    )
+    journal.transition_submission(
+        client_order_id=approved.client_order_id,
+        state=SubmissionState.STARTED,
+        timestamp=NOW + timedelta(seconds=1),
+    )
+    broker_order = order_snapshot(approved)
+    broker_fill = fill(approved)
+
+    capacity = journal._connection
+    assert capacity is not None
+    current_pages = int(capacity.execute("PRAGMA page_count").fetchone()[0])
+    limited_pages = int(capacity.execute(f"PRAGMA max_page_count={current_pages}").fetchone()[0])
+    assert limited_pages == current_pages
+
+    with pytest.raises(BrokerJournalError, match="transaction failed"):
+        journal.apply_reconciliation(
+            account=account(),
+            orders=(broker_order,),
+            positions=(position(),),
+            fills=(broker_fill,),
+            submission_resolutions={approved.client_order_id: broker_order.broker_order_id},
+            activity_checkpoint=broker_fill.activity_id,
+            timestamp=NOW + timedelta(seconds=4),
+            report={"ready": True, "padding": "x" * 1_000_000},
+        )
+    assert journal.activity_checkpoint() is None
+    assert journal.all_fills() == ()
+    assert journal.unresolved_submissions()[0].state is SubmissionState.STARTED
+    assert journal.integrity_check() == "ok"
+
+    capacity.execute("PRAGMA max_page_count=1073741823")
+    sequence = journal.apply_reconciliation(
+        account=account(),
+        orders=(broker_order,),
+        positions=(position(),),
+        fills=(broker_fill,),
+        submission_resolutions={approved.client_order_id: broker_order.broker_order_id},
+        activity_checkpoint=broker_fill.activity_id,
+        timestamp=NOW + timedelta(seconds=5),
+        report={"ready": True, "issues": []},
+    )
+    assert sequence == 1
+    assert journal.activity_checkpoint() == broker_fill.activity_id
+    assert len(journal.all_fills()) == 1
+    journal.close()

@@ -9,14 +9,12 @@ A pull request must not add a paper or live mode, broker credential, production 
 ## Development Setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
-quantum-trader preflight
+python -m pip install --disable-pip-version-check uv==0.12.1
+uv sync --locked --extra dev
+uv run quantum-trader preflight
 ```
 
-The runtime supports Python 3.11 and newer. Development should occur in an isolated environment; do not rely on packages that happen to exist globally.
+The runtime supports Python 3.11 and newer. The committed `uv.lock` defines the cross-platform development environment used by protected CI; do not update it accidentally or rely on globally installed packages.
 
 ## Workflow
 
@@ -38,13 +36,10 @@ Create a focused branch, add or update tests before changing behavior, keep doma
 Run the complete gate before opening a pull request:
 
 ```bash
-ruff format --check src tests
-ruff check src tests
-mypy src
-pytest --cov=quantum_trader --cov-report=term-missing
-bandit -q -r src
-python -m build
+make quality
 ```
+
+The target verifies lock freshness and runs every Python tool through `uv run --extra dev`; protected CI additionally audits the exported locked graph and retains a CycloneDX SBOM.
 
 Coverage must remain at or above 90%. Tests must not be deleted, skipped, weakened, or changed solely to make a defect appear to pass. A bug fix should include a regression test that fails under the previous behavior.
 

@@ -30,7 +30,8 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Action-specific, expiring, one-use HMAC approvals bound to paper mode, namespace, code, configuration, account, nonce, acknowledgment, and exact action.
 - Reconciliation-bound resume gate and pause-first cancel kill switch that touches only deterministic bot-owned paper orders, verifies terminal and residual state, reconciles, and remains paused.
 - Crash-safe paper execution orchestrator with canonical payload hashes, exclusive durable attempt claims, pre-submit persistence, acknowledged/ambiguous/rejected/reconciled states, global unresolved-submission blocking, pause-on-uncertainty, and a recovery API that cannot submit.
-- Deterministic failure-injection matrix covering every submission boundary, operator pause races, close/reopen recovery, non-success HTTP classification, partial fills, fill-during-cancel, in-progress operator restart, corrupt journal paths, and mid-transaction rollback plus clean retry.
+- Deterministic failure-injection matrix covering every submission boundary, operator pause races, close/reopen recovery, literal subprocess termination plus repeated fresh-process recovery, non-success HTTP classification, partial fills, fill-during-cancel, in-progress operator restart, corrupt journal paths, simulated `SQLITE_FULL`, and mid-transaction rollback plus clean retry.
+- Committed cross-platform `uv.lock`, locked local and protected CI environments, immutable GitHub Action SHAs, locked dependency vulnerability audit, and retained CycloneDX SBOM artifacts.
 
 ### Changed
 
@@ -43,9 +44,10 @@ All notable changes to Quantum Trader Pro are documented in this file.
 
 ### Validation
 
-- Expanded the local suite to 160 passing tests with 90.23% branch coverage after the crash-recovery and failure-injection phase.
+- Expanded the locked local suite to 162 passing tests with 90.23% branch coverage after literal process-recovery and storage-exhaustion acceptance.
 - Verified exactly one tested broker submission side effect across post-response, post-acknowledgment, and post-reconciliation hard crashes; close/reopen recovery used deterministic client-ID lookup and never issued a second POST.
-- Verified exact two-execution partial-fill projection across restart, honest fill-during-cancel reconciliation, terminal never-submitted pause races, and all-or-nothing rollback after an injected SQLite trigger failure.
+- Verified exact two-execution partial-fill projection across restart, honest fill-during-cancel reconciliation, terminal never-submitted pause races, all-or-nothing rollback after an injected SQLite trigger failure, and clean recovery after simulated `SQLITE_FULL`.
+- Audited the locked 43-package development graph with zero known vulnerabilities on 2026-08-12; protected CI regenerates the audit and CycloneDX SBOM.
 - Verified the one-click demo produces six deterministic, checksummed, simulation-only artifacts and an explicit finite-run end state.
 - Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
 - Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.

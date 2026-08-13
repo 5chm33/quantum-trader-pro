@@ -1,8 +1,9 @@
-.PHONY: help install format format-check lint typecheck test security docs shell research-evidence build preflight demo quality clean
+.PHONY: help install lock format format-check lint typecheck test security docs shell research-evidence workflow-security build preflight demo quality clean
 
 help:
 	@printf '%s\n' \
-	  'install       Install the project with development tools' \
+	  'install       Install the locked project and development tools' \
+	  'lock          Verify the committed dependency lockfile is current' \
 	  'format        Format source, tests, scripts, and bootstrap' \
 	  'format-check  Verify formatting without changing files' \
 	  'lint          Run Ruff lint checks' \
@@ -12,6 +13,7 @@ help:
 	  'docs          Validate repository-relative documentation links' \
 	  'shell         Validate portable shell launchers' \
 	  'research-evidence  Verify retained trial ledgers and locked holdout' \
+	  'workflow-security Verify immutable action references and safe authority' \
 	  'build         Build source and wheel distributions' \
 	  'preflight     Print the simulation-only safety boundary' \
 	  'demo          Run and verify the offline bundled demo' \
@@ -19,48 +21,54 @@ help:
 	  'clean         Remove generated development artifacts'
 
 install:
-	python -m pip install -e '.[dev]'
+	uv sync --locked --extra dev
+
+lock:
+	uv lock --check
 
 format:
-	ruff format src tests scripts launch_demo.py
+	uv run --extra dev ruff format src tests scripts launch_demo.py
 
 format-check:
-	ruff format --check src tests scripts launch_demo.py
+	uv run --extra dev ruff format --check src tests scripts launch_demo.py
 
 lint:
-	ruff check src tests scripts launch_demo.py
+	uv run --extra dev ruff check src tests scripts launch_demo.py
 
 typecheck:
-	mypy src
+	uv run --extra dev mypy src tests/helpers/paper_process_worker.py
 
 test:
-	PYTHONPATH=src pytest --cov=quantum_trader --cov-report=term-missing
+	uv run --extra dev pytest --cov=quantum_trader --cov-report=term-missing
 
 security:
-	bandit -q -r src
+	uv run --extra dev bandit -q -r src
 
 docs:
-	python scripts/check-doc-links.py
+	uv run --extra dev python scripts/check-doc-links.py
 
 shell:
 	bash -n launch_demo.sh scripts/run-cloud-simulation.sh
 
 research-evidence:
-	python scripts/verify-evaluation-evidence.py
+	uv run --extra dev python scripts/verify-evaluation-evidence.py
+
+workflow-security:
+	uv run --extra dev python scripts/verify-workflow-security.py
 
 build:
-	python -m build
+	uv run --extra dev python -m build
 
 preflight:
-	PYTHONPATH=src python -m quantum_trader.cli preflight
+	uv run --extra dev quantum-trader preflight
 
 demo:
 	rm -rf .quality-demo
-	python launch_demo.py --output .quality-demo >/dev/null
-	python scripts/verify-demo-output.py .quality-demo
+	uv run --extra dev python launch_demo.py --output .quality-demo >/dev/null
+	uv run --extra dev python scripts/verify-demo-output.py .quality-demo
 	@rm -rf .quality-demo
 
-quality: format-check lint typecheck test security docs shell research-evidence build demo
+quality: lock format-check lint typecheck test security docs shell research-evidence workflow-security build demo
 
 clean:
-	rm -rf .coverage .pytest_cache .mypy_cache .ruff_cache build dist htmlcov *.egg-info src/*.egg-info .quality-demo
+	rm -rf .coverage .pytest_cache .mypy_cache .ruff_cache .venv build dist htmlcov *.egg-info src/*.egg-info .quality-demo

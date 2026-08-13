@@ -9,6 +9,8 @@ __pycache__/
 .coverage.*
 coverage.xml
 htmlcov/
+locked-requirements.txt
+sbom.cdx.json
 
 # Virtual environments and packaging
 .venv/

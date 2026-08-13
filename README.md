@@ -7,7 +7,7 @@
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
-[![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-162%20passing-brightgreen)](tests)
 [![Coverage](https://img.shields.io/badge/coverage-90.23%25-brightgreen)](tests)
 [![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A--blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
@@ -92,18 +92,18 @@ If Python is not installed, use the official installer from [python.org](https:/
 
 ## Developer Installation
 
-Development tooling is isolated in the optional `dev` dependency group.
+Development tooling is resolved by the committed cross-platform `uv.lock`; the runtime package itself has no third-party dependencies. Install the exact environment manager used by protected CI, then synchronize without updating the lock:
 
 ```bash
 git clone https://github.com/5chm33/quantum-trader-pro.git
 cd quantum-trader-pro
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e '.[dev]'
-quantum-trader preflight
-quantum-trader demo
+python -m pip install --disable-pip-version-check uv==0.12.1
+uv sync --locked --extra dev
+uv run quantum-trader preflight
+uv run quantum-trader demo
 ```
+
+`make quality` runs every local check through that locked environment. The one-click simulation launchers remain dependency-free and do not require this developer setup.
 
 For research, provide a real local CSV with the required columns shown below. Rows must be strictly increasing, prices must form a valid OHLC bar, volume must be non-negative, and timestamps must be ISO-8601 values. Naive timestamps are interpreted as UTC by default.
 
@@ -133,18 +133,15 @@ The report embeds the input checksum through the source identifier and adds a me
 
 ## Quality Gate
 
-The repository quality gate is intentionally stricter than the historical prototype. It requires formatting and lint checks, strict static typing, unit/integration/smoke tests, at least 90% coverage, a source security scan, and an installation/preflight smoke test.
+The repository quality gate is intentionally stricter than the historical prototype. It requires a current lockfile, formatting and lint checks, strict static typing, unit/integration/smoke tests, at least 90% branch coverage, source security scanning, retained-research integrity, immutable workflow actions, package builds, and installed/preflight/demo checks.
 
 ```bash
-ruff format --check src tests
-ruff check src tests
-mypy src
-pytest --cov=quantum_trader --cov-report=term-missing
-bandit -q -r src
-python -m build
+python -m pip install --disable-pip-version-check uv==0.12.1
+uv sync --locked --extra dev
+make quality
 ```
 
-The current feature branch is **160 passing tests**, **90.23% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. The suite includes hard-crash boundaries, close/reopen recovery, partial fills, cancel races, timeout classification, pause races, corrupt-path rejection, and injected transactional rollback. Protected CI repeats the quality gate on Python 3.11 and 3.12 and validates one-click launchers on Linux, macOS, and Windows.
+The current feature branch has **162 passing tests** and **90.23% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. The suite includes every injected submission boundary, a literal subprocess `os._exit` followed by two fresh-process recoveries with exactly one fake external side effect, close/reopen recovery, partial fills, fill-during-cancel, timeout and non-success response classification, operator pause races, corrupt-path rejection, injected transaction rollback, and simulated `SQLITE_FULL` rollback plus clean recovery. The locked 43-package development graph had **zero known vulnerabilities** in the 2026-08-12 acceptance audit; protected CI re-audits it and retains a CycloneDX SBOM. All five external workflow references are pinned to immutable commit SHAs. Protected CI repeats the gate on Python 3.11 and 3.12 and validates the one-click launchers on Linux, macOS, and Windows.
 
 ---
 
@@ -157,7 +154,7 @@ The current feature branch is **160 passing tests**, **90.23% branch coverage**,
 | `src/quantum_trader/ports/` | Simulation and external broker, control-data, journal, operator-control, market-data, and event-store interfaces |
 | `src/quantum_trader/adapters/` | CSV replay, simulation, fixed-origin paper/control-data clients, strict credential files, and SQLite stores |
 | `tests/unit/` | Domain invariants and defensive-path coverage |
-| `tests/integration/` | Deterministic replay, broker reconciliation, operator actions, partial fills, cancel races, and crash-recovery verification |
+| `tests/integration/` | Deterministic replay, broker reconciliation, operator actions, literal process termination, partial fills, cancel races, and crash recovery |
 | `tests/smoke/` | Installed CLI, artifact, and prohibited-mode checks |
 | `docs/` | Architecture, methodology, failure injection, operator controls, legacy audit, deployment, and visual evidence |
 | `deployment/` | Hardened simulation-only systemd templates |
