@@ -1,0 +1,39 @@
+{
+  "inspection_id": "example-daily-etf-admission-v1",
+  "inspected_at": "2026-08-13T12:00:00Z",
+  "provider": "example_provider",
+  "dataset": "daily_etf_research",
+  "query_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "provider_schema_version": "example-v1",
+  "adjustment_convention": "Vendor total-return adjusted close is retained alongside unadjusted close; corporate actions are separately retained.",
+  "fixed_universe_rule": "The protocol names eligible ETFs before the campaign query and records any ineligibility by decision date.",
+  "missing_bar_policy": "A missing regular-session daily bar produces a no-trade outcome for that instrument until a valid bar is available.",
+  "retention_and_rerun_permitted": true,
+  "cost_model_requires_quote_or_proxy": true,
+  "lockbox_query_executed": false,
+  "candidate_registered": false,
+  "snapshot_created": false,
+  "fields": [
+    {"component": "daily_price", "field_name": "instrument_id", "source_path": "bars.instrument_id", "time_semantics": "identity at source record", "present": true},
+    {"component": "daily_price", "field_name": "event_at", "source_path": "bars.event_at", "time_semantics": "bar close event time", "present": true},
+    {"component": "daily_price", "field_name": "available_at", "source_path": "bars.available_at", "time_semantics": "provider availability time", "present": true},
+    {"component": "daily_price", "field_name": "session_id", "source_path": "bars.session_id", "time_semantics": "exchange session identifier", "present": true},
+    {"component": "daily_price", "field_name": "close", "source_path": "bars.close", "time_semantics": "unadjusted close convention retained", "present": true},
+    {"component": "daily_price", "field_name": "adjusted_close", "source_path": "bars.adjusted_close", "time_semantics": "documented provider adjustment convention", "present": true},
+    {"component": "daily_price", "field_name": "unadjusted_close", "source_path": "bars.unadjusted_close", "time_semantics": "raw close before provider adjustment", "present": true},
+    {"component": "daily_price", "field_name": "volume", "source_path": "bars.volume", "time_semantics": "regular-session daily volume", "present": true},
+    {"component": "daily_price", "field_name": "liquidity_proxy", "source_path": "bars.dollar_volume", "time_semantics": "daily cost-model liquidity proxy", "present": true},
+    {"component": "corporate_action", "field_name": "action_type", "source_path": "actions.action_type", "time_semantics": "event classification", "present": true},
+    {"component": "corporate_action", "field_name": "effective_at", "source_path": "actions.effective_at", "time_semantics": "economic effective time", "present": true},
+    {"component": "corporate_action", "field_name": "available_at", "source_path": "actions.available_at", "time_semantics": "provider availability time", "present": true},
+    {"component": "cash_rate", "field_name": "rate_date", "source_path": "cash.rate_date", "time_semantics": "rate observation date", "present": true},
+    {"component": "cash_rate", "field_name": "available_at", "source_path": "cash.available_at", "time_semantics": "provider availability time", "present": true},
+    {"component": "cash_rate", "field_name": "rate", "source_path": "cash.rate", "time_semantics": "annualized cash-rate convention", "present": true}
+  ],
+  "coverage": [
+    {"component": "daily_price", "coverage_start_at": "2010-01-01T00:00:00Z", "coverage_end_at": "2018-12-31T23:59:59Z", "observed_row_count": 2000, "missing_row_count": 0, "correction_policy": "Retain finality and correction status per bar."},
+    {"component": "corporate_action", "coverage_start_at": "2010-01-01T00:00:00Z", "coverage_end_at": "2018-12-31T23:59:59Z", "observed_row_count": 100, "missing_row_count": 0, "correction_policy": "Retain announced, effective, and correction records."},
+    {"component": "cash_rate", "coverage_start_at": "2010-01-01T00:00:00Z", "coverage_end_at": "2018-12-31T23:59:59Z", "observed_row_count": 2000, "missing_row_count": 0, "correction_policy": "Retain provider availability and published rate revisions."},
+    {"component": "universe", "coverage_start_at": "2010-01-01T00:00:00Z", "coverage_end_at": "2018-12-31T23:59:59Z", "observed_row_count": 6, "missing_row_count": 0, "correction_policy": "Retain dated eligibility and symbol-identity corrections."}
+  ]
+}
