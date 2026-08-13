@@ -4,6 +4,20 @@ All notable changes to Quantum Trader Pro are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Frozen `research/a-plus-strategy-v1` governance that separates engineering quality from strategy evidence, preserves the failed v1 campaign and unopened v1 holdout, caps grades before earned holdout/paper evidence, and restricts initial options research to defined-risk or fully collateralized structures.
+- Citation-validated twelve-family hypothesis catalog covering diversified equity and defined-risk options research with permanent baselines, data-readiness boundaries, explicit failure modes, and machine-enforced candidate ceilings.
+- Provider-neutral, hash-pinned point-in-time data-contract catalog covering equity bars, universes, fundamentals, earnings, corporate actions, option instruments, quotes, trades, Greeks, rate curves, dividends, volatility surfaces, sessions, borrow, and immutable snapshot manifests.
+- Hardened append-only SQLite experiment ledger with bounded candidate registration, frozen preregistration, retained completed/failed/aborted attempts, artifact hashes, complete comparison barriers, candidate-bound one-time holdouts, expiring approvals, retrieved-snapshot binding, event-chain and projection digests, restart verification, and secure mode-`0600` storage.
+- Public experiment-ledger specification explaining evidence lifecycle, anti-contamination controls, integrity model, and the explicit distinction between research governance and a performance claim.
+
+### Validation
+
+- Expanded the locked suite to **181 passing tests** with **90.14% branch coverage** after experiment-ledger lifecycle, tamper, restart, secure-path, comparison, and holdout-boundary coverage.
+- Re-ran formatting, strict typing, security checks, strategy-governance verification, point-in-time contract verification, locked dependency checks, package build, installed preflight, and the one-click simulation without enabling paper or live execution.
+- Retained the prior preregistered negative result unchanged: the existing moving-average campaign failed pre-holdout promotion and its original holdout remains sealed.
+
 ## [0.2.0] — 2026-08-12
 
 ### Added

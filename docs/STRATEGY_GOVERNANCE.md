@@ -35,6 +35,8 @@ A candidate advances through explicit states. State changes are append-only expe
 | `strategy_a_plus` | Quantitative, robustness, capacity, options, and paper gates all pass | Publish evidence; live remains a separate decision |
 | `rejected` | Any mandatory gate fails | Retain evidence; start a new preregistered hypothesis |
 
+The state machine is now implemented by the hardened, append-only [`EXPERIMENT_LEDGER.md`](EXPERIMENT_LEDGER.md). It binds campaigns, bounded candidates, frozen preregistrations, complete terminal attempt sets, retained artifacts, comparison barriers, candidate-bound lockboxes, one-use approvals, and retrieved snapshot identities. It is an integrity mechanism for future research; **no new candidate result, strategy grade, paper session, or live order has been created by that implementation**.
+
 ## A+ Grade Policy
 
 A weighted score of at least **95/100** is necessary but not sufficient. Every hard gate must also pass. Before an untouched holdout, the maximum provisional strategy grade is **A-**. Before authenticated shadow and paper evidence, the maximum final strategy grade is **A**. A software implementation can retain its A+ engineering grade even when every strategy candidate is rejected.
@@ -57,7 +59,7 @@ The exact numeric thresholds will be frozen in the campaign protocol **before** 
 
 | Gate | Non-negotiable rule |
 |---|---|
-| Candidate budget | Every hypothesis, parameter set, universe, cost model, and result receives an immutable experiment ID |
+| Candidate budget | Every hypothesis, parameter set, universe, cost model, and result receives an immutable experiment ID in the append-only experiment ledger |
 | Data boundary | Real point-in-time data is required for evidence; generated data is restricted to unit and failure tests |
 | Benchmarking | Total-return and risk-matched permanent baselines appear in every report |
 | Selection | Training and validation select candidates; untouched test folds and lockbox never select parameters |
@@ -78,7 +80,7 @@ The first campaign is restricted to **defined-risk or fully collateralized struc
 
 ## Holdout and Anti-Contamination Rules
 
-The existing v1 lockbox remains sealed. The new campaign will define a separate lockbox after data coverage and protocol feasibility are known. Its bytes or provider query range may not be retrieved during development. Opening requires all pre-holdout gates, an immutable receipt, and explicit user approval in the conversation. A failed holdout is published and may not be reused as development data for the same campaign.
+The existing v1 lockbox remains sealed. The new campaign will define a separate lockbox after data coverage and protocol feasibility are known. Its bytes or provider query range may not be retrieved during development. The implemented experiment ledger permits exactly one candidate-bound sealed lockbox, records its provider-query and boundary hashes before retrieval, requires all pre-holdout gates plus an immutable one-use approval and explicit user approval in the conversation, and binds the later attempt to the retrieved snapshot manifest. A failed holdout is published and may not be reused as development data for the same campaign.
 
 Research agents and parallel workers may receive only the development partitions assigned to them. They may not inspect another candidate's protected results before completing their own output. Candidate comparisons happen only after every assigned result is committed to the experiment ledger.
 
