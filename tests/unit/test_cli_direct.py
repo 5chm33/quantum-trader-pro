@@ -84,7 +84,7 @@ def test_cli_preflight_and_version(capsys: pytest.CaptureFixture[str]) -> None:
     assert preflight["one_click_demo"] is True
 
     assert main(["version"]) == 0
-    assert capsys.readouterr().out.strip() == "0.1.0"
+    assert capsys.readouterr().out.strip() == "0.2.0"
 
 
 def test_cli_demo_runs_from_bundled_data(

@@ -9,7 +9,7 @@
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
 [![Tests](https://img.shields.io/badge/tests-162%20passing-brightgreen)](tests)
 [![Coverage](https://img.shields.io/badge/coverage-90.23%25-brightgreen)](tests)
-[![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A--blue)](docs/ENGINEERING_GRADE.md)
+[![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A%2B-blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
 [![Execution](https://img.shields.io/badge/execution-simulation%20only-blueviolet)](SAFETY.md)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -143,6 +143,8 @@ make quality
 
 The current feature branch has **162 passing tests** and **90.23% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. The suite includes every injected submission boundary, a literal subprocess `os._exit` followed by two fresh-process recoveries with exactly one fake external side effect, close/reopen recovery, partial fills, fill-during-cancel, timeout and non-success response classification, operator pause races, corrupt-path rejection, injected transaction rollback, and simulated `SQLITE_FULL` rollback plus clean recovery. The locked 43-package development graph had **zero known vulnerabilities** in the 2026-08-12 acceptance audit; protected CI re-audits it and retains a CycloneDX SBOM. All five external workflow references are pinned to immutable commit SHAs. Protected CI repeats the gate on Python 3.11 and 3.12 and validates the one-click launchers on Linux, macOS, and Windows.
 
+The exact cloud commit, wheel checksum, rollback, `systemd` boundary, 2.1 hardening score, and byte-identical validation artifacts are recorded in [`docs/DEPLOYMENT_EVIDENCE.md`](docs/DEPLOYMENT_EVIDENCE.md). The installed service remains disabled and inactive.
+
 ---
 
 ## Repository Map
@@ -163,7 +165,7 @@ The current feature branch has **162 passing tests** and **90.23% branch coverag
 
 ## Project History and Evidence Boundary
 
-The final evidence-weighted portfolio assessment is **A- (92.45/100)**; the complete rubric and separate assessment of the original project’s ambition are documented in [`docs/ENGINEERING_GRADE.md`](docs/ENGINEERING_GRADE.md).
+The current evidence-weighted research-software assessment is **A+ (97.95/100)**; the original audited v0.1.0 baseline remains recorded at A- (92.45/100). The complete rubric, failed-strategy distinction, blocked paper activation, and separate assessment of the original project’s ambition are documented in [`docs/ENGINEERING_GRADE.md`](docs/ENGINEERING_GRADE.md).
 
 The original archive contained 381 Python and launcher files, 35.61 GB of historical logs, multiple databases, model artifacts, backup generations, Windows scheduled-task launchers, Alpaca integration, and Kalshi components. It also contained hard-coded credential findings, conflicting dependency manifests, syntax and interface failures, silent synthetic fallbacks, and direct live-order call sites. The original files remain preserved outside this repository and were never executed during the audit.
 

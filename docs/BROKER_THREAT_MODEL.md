@@ -2,7 +2,7 @@
 
 ## Scope
 
-This model covers optional paper and future live brokerage adapters. The current v0.1.0 simulation baseline has no brokerage dependency. The target design keeps simulation as the default and treats every network response, stream event, local file, clock reading, and operator command as potentially stale, duplicated, delayed, malformed, or unauthorized.
+This model covers the current fixed-sandbox paper internals and any future live brokerage design. The v0.2.0 public interface remains simulation/research-only: it exposes no paper-order command, no live adapter, and no real-money execution path. Optional paper components are internal and treat every network response, stream event, local file, clock reading, and operator action as potentially stale, duplicated, delayed, malformed, or unauthorized.
 
 ## Protected Assets
 
