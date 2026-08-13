@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "research" / "governance" / "strategy_grade_policy_v1.json"
 IDENTITIES_PATH = ROOT / "research" / "governance" / "baseline_identities.txt"
 EVIDENCE_CHECKSUMS_PATH = ROOT / "research" / "governance" / "v1_evidence_checksums.txt"
+HYPOTHESIS_CATALOG_PATH = ROOT / "research" / "governance" / "hypothesis_catalog_v1.json"
 V1_PROTOCOL_PATH = ROOT / "evaluation" / "protocol_v1.json"
 V1_EVIDENCE_ROOT = ROOT / "evaluation" / "results" / "v1-preholdout"
 
@@ -53,6 +54,7 @@ def main() -> int:
     policy: dict[str, Any] = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
     identities = parse_key_values(IDENTITIES_PATH)
     evidence_checksums = parse_checksum_manifest(EVIDENCE_CHECKSUMS_PATH)
+    catalog: dict[str, Any] = json.loads(HYPOTHESIS_CATALOG_PATH.read_text(encoding="utf-8"))
     baseline: dict[str, Any] = policy["baseline"]
 
     require(policy["policy_id"] == "qtpro-strategy-grade-v1", "unexpected policy ID")
@@ -80,6 +82,52 @@ def main() -> int:
         require(
             digest(ROOT / relative_name) == expected, f"frozen evidence mismatch: {relative_name}"
         )
+
+    require(catalog["catalog_id"] == "qtpro-strategy-hypotheses-v1", "unexpected catalog ID")
+    require(
+        catalog["status"] == "literature_screened_not_preregistered",
+        "hypothesis catalog cannot imply preregistration or promotion",
+    )
+    families: list[dict[str, Any]] = catalog["families"]
+    expected_family_ids = {f"H{index:02d}" for index in range(1, 13)}
+    observed_family_ids = {str(family["id"]) for family in families}
+    require(len(families) == 12, "hypothesis family count must remain 12")
+    require(observed_family_ids == expected_family_ids, "hypothesis family IDs changed")
+    require(
+        sum(int(family["candidate_ceiling"]) for family in families) == 56,
+        "aggregate candidate ceiling changed",
+    )
+    require(
+        all(1 <= int(family["candidate_ceiling"]) <= 6 for family in families),
+        "family candidate ceiling exceeds the frozen range",
+    )
+    option_families = [family for family in families if str(family["id"]) >= "H08"]
+    require(
+        all(
+            str(family["data_readiness"]).startswith("blocked_pending_point_in_time_options")
+            for family in option_families
+        ),
+        "empirical options families must remain blocked pending point-in-time data",
+    )
+    catalog_rules: dict[str, Any] = catalog["rules"]
+    required_true_catalog_rules = (
+        "candidate_ceilings_are_upper_bounds",
+        "all_attempts_must_enter_experiment_ledger",
+        "hierarchical_multiple_testing_required",
+        "provider_market_data_required_for_empirical_options_grade",
+    )
+    require(
+        all(catalog_rules[name] is True for name in required_true_catalog_rules),
+        "a required hypothesis catalog protection was disabled",
+    )
+    require(
+        catalog_rules["indicative_options_quotes_for_grade"] is False,
+        "indicative options quotes cannot support a strategy grade",
+    )
+    require(
+        catalog_rules["live_execution_allowed"] is False,
+        "live execution must remain unavailable in the hypothesis catalog",
+    )
 
     require(baseline["v1_holdout_status"] == "locked_unopened", "v1 holdout status changed")
     forbidden_holdout_files = (
@@ -134,6 +182,10 @@ def main() -> int:
                 "a_plus_minimum": policy["score"]["a_plus_minimum"],
                 "weight_total": sum(policy["score"]["weights"].values()),
                 "mandatory_gate_categories": len(required_categories),
+                "hypothesis_families": len(families),
+                "candidate_ceiling_total": sum(
+                    int(family["candidate_ceiling"]) for family in families
+                ),
                 "allowed_options_structures": sorted(allowed),
                 "v1_holdout_status": baseline["v1_holdout_status"],
                 "public_paper_command_allowed": False,
