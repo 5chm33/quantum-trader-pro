@@ -73,7 +73,9 @@ def test_cli_preflight_and_version(capsys: pytest.CaptureFixture[str]) -> None:
     assert preflight["crash_safe_paper_executor"] is True
     assert preflight["no_blind_retry_recovery"] is True
     assert preflight["deterministic_failure_injection"] is True
-    assert preflight["literal_process_crash_acceptance"] is False
+    assert preflight["literal_process_crash_acceptance"] is True
+    assert preflight["simulated_storage_exhaustion_acceptance"] is True
+    assert preflight["service_manager_restart_acceptance"] is False
     assert preflight["flatten_positions_kill_switch"] is False
     assert preflight["operator_paper_commands_available"] is False
     assert preflight["authenticated_paper_acceptance"] is False
