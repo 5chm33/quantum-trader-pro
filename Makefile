@@ -1,4 +1,4 @@
-.PHONY: help install lock format format-check lint typecheck test security docs shell research-evidence strategy-governance workflow-security build preflight demo quality clean
+.PHONY: help install lock format format-check lint typecheck test security docs shell research-evidence strategy-governance data-contracts workflow-security build preflight demo quality clean
 
 help:
 	@printf '%s\n' \
@@ -14,6 +14,7 @@ help:
 	  'shell         Validate portable shell launchers' \
 	  'research-evidence  Verify retained trial ledgers and locked holdout' \
 	  'strategy-governance Verify frozen A+ grade, options, and holdout policy' \
+	  'data-contracts Verify point-in-time schemas and immutable hash manifest' \
 	  'workflow-security Verify immutable action references and safe authority' \
 	  'build         Build source and wheel distributions' \
 	  'preflight     Print the simulation-only safety boundary' \
@@ -57,6 +58,9 @@ research-evidence:
 strategy-governance:
 	uv run --extra dev python scripts/verify-strategy-governance.py
 
+data-contracts:
+	uv run --extra dev python scripts/verify-data-contracts.py
+
 workflow-security:
 	uv run --extra dev python scripts/verify-workflow-security.py
 
@@ -72,7 +76,7 @@ demo:
 	uv run --extra dev python scripts/verify-demo-output.py .quality-demo
 	@rm -rf .quality-demo
 
-quality: lock format-check lint typecheck test security docs shell research-evidence strategy-governance workflow-security build demo
+quality: lock format-check lint typecheck test security docs shell research-evidence strategy-governance data-contracts workflow-security build demo
 
 clean:
 	rm -rf .coverage .pytest_cache .mypy_cache .ruff_cache .venv build dist htmlcov *.egg-info src/*.egg-info .quality-demo

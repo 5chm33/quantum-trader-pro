@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/volatility_surface_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Volatility Surface v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "underlying_security",
+    "availability",
+    "provenance",
+    "surface_id",
+    "fit_model",
+    "fit_model_version",
+    "coordinate_type",
+    "calculation_at",
+    "nodes",
+    "quality_flags"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.volatility_surface.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "underlying_security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "surface_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "fit_model": {"enum": ["none_observed_nodes", "svi", "sabr", "spline", "other"]},
+    "fit_model_version": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "coordinate_type": {"enum": ["strike", "log_moneyness", "forward_delta"]},
+    "calculation_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "underlying_snapshot_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "rate_curve_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "dividend_input_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "nodes": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "option_instrument_id",
+          "option_quote_record_id",
+          "expiration_at",
+          "strike",
+          "right",
+          "implied_volatility"
+        ],
+        "properties": {
+          "option_instrument_id": {"type": "string", "maxLength": 80},
+          "option_quote_record_id": {"type": "string", "maxLength": 200},
+          "option_greeks_record_id": {"type": ["string", "null"], "maxLength": 200},
+          "expiration_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+          "strike": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+          "right": {"enum": ["call", "put"]},
+          "log_moneyness": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+          "forward_delta": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+          "bid_implied_volatility": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]},
+          "ask_implied_volatility": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]},
+          "implied_volatility": {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"},
+          "fit_residual": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]}
+        }
+      }
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "sparse_expiry",
+          "wide_spreads",
+          "crossed_quotes",
+          "stale_quotes",
+          "calendar_arbitrage",
+          "butterfly_arbitrage",
+          "nonconverged_nodes",
+          "mixed_capture_times"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}

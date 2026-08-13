@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/corporate_action_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Corporate Action v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "action_type",
+    "effective_at",
+    "status"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.corporate_action.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "action_type": {
+      "enum": [
+        "cash_dividend",
+        "stock_dividend",
+        "split",
+        "distribution",
+        "rights",
+        "merger",
+        "spin_off",
+        "new_listing",
+        "delisting",
+        "suspension",
+        "symbol_change",
+        "option_contract_adjustment"
+      ]
+    },
+    "status": {"enum": ["announced", "confirmed", "effective", "canceled", "corrected"]},
+    "effective_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "ex_date": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/date"}]},
+    "record_date": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/date"}]},
+    "payable_date": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/date"}]},
+    "cash_amount": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "currency": {"type": ["string", "null"], "pattern": "^([A-Z]{3})?$"},
+    "ratio_numerator": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    },
+    "ratio_denominator": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    },
+    "new_instrument_id": {"type": ["string", "null"], "maxLength": 80},
+    "old_symbol": {"type": ["string", "null"], "maxLength": 32},
+    "new_symbol": {"type": ["string", "null"], "maxLength": 32},
+    "occ_memo_uri": {"type": ["string", "null"], "format": "uri", "maxLength": 2048},
+    "occ_memo_sha256": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/sha256"}]
+    },
+    "deliverable_version": {"type": ["string", "null"], "maxLength": 100},
+    "deliverable_description": {"type": ["string", "null"], "maxLength": 2000}
+  }
+}

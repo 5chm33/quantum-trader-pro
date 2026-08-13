@@ -62,7 +62,7 @@ The frozen [`qtpro-walk-forward-v1`](evaluation/protocol_v1.json) protocol was c
 
 The complete public evidence bundle includes all **2,016 validation trials**, **252 untouched test/cost trials**, **336 robustness trials**, fold selections, source checksums, gates, and deterministic hashes in [`evaluation/results/v1-preholdout/`](evaluation/results/v1-preholdout/). The full evaluation was executed independently twice; every core artifact was **byte-for-byte identical**. The readable [`research protocol`](docs/RESEARCH_PROTOCOL.md) and [`methodology`](docs/METHODOLOGY.md) explain the selection order, adjusted-close benchmark, cost model, start-date sensitivity, and lockbox boundary.
 
-The new strategy campaign is governed separately so it cannot retune or relabel the failed v1 result. [`STRATEGY_GOVERNANCE.md`](docs/STRATEGY_GOVERNANCE.md) freezes grade caps and holdout rules; the citation-validated [`STRATEGY_HYPOTHESES.md`](docs/STRATEGY_HYPOTHESES.md) defines twelve falsifiable equity and defined-risk options families, permanent baselines, point-in-time data needs, and candidate ceilings before any new experiment is preregistered.
+The new strategy campaign is governed separately so it cannot retune or relabel the failed v1 result. [`STRATEGY_GOVERNANCE.md`](docs/STRATEGY_GOVERNANCE.md) freezes grade caps and holdout rules; the citation-validated [`STRATEGY_HYPOTHESES.md`](docs/STRATEGY_HYPOTHESES.md) defines twelve falsifiable equity and defined-risk options families, permanent baselines, point-in-time data needs, and candidate ceilings before any new experiment is preregistered. The provider-neutral [`DATA_CONTRACTS.md`](docs/DATA_CONTRACTS.md) specification and its 18 hash-pinned schemas define the causal, licensing, corporate-action, options-lifecycle, and snapshot evidence every future data adapter must satisfy.
 
 > **Interpretation:** This is a successful falsification and reproducibility result, not evidence of an alpha edge. It does not authenticate the legacy project’s reported live history, prove future profitability, or authorize live capital. The earlier v0.1.0 single-SPY engineering run remains available in the [baseline release](https://github.com/5chm33/quantum-trader-pro/releases/tag/v0.1.0) for historical comparison, but it is not the headline strategy evaluation.
 
@@ -164,6 +164,7 @@ The exact cloud commit, wheel checksum, rollback, `systemd` boundary, 2.1 harden
 | `tests/smoke/` | Installed CLI, artifact, and prohibited-mode checks |
 | `docs/` | Architecture, methodology, strategy governance, hypothesis evidence, failure injection, operator controls, legacy audit, deployment, and visual evidence |
 | `research/governance/` | Machine-enforced grade policy, baseline identities, frozen evidence checksums, and bounded hypothesis catalog |
+| `research/schemas/` | Eighteen provider-neutral point-in-time equity, event, volatility, options, rate, and immutable snapshot contracts plus a hash manifest |
 | `deployment/` | Hardened simulation-only systemd templates |
 
 ---

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/earnings_event_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Earnings Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "fiscal_period_end",
+    "announcement_at",
+    "announcement_session",
+    "first_executable_at",
+    "metric",
+    "currency",
+    "actual_value",
+    "estimate_snapshot_record_id"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.earnings_event.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "fiscal_period_end": {"$ref": "common_v1.schema.json#/$defs/date"},
+    "announcement_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "announcement_session": {"enum": ["pre_market", "regular", "post_market", "non_trading_day", "unknown"]},
+    "first_executable_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "metric": {"enum": ["diluted_eps", "basic_eps", "revenue"]},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "actual_value": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+    "estimate_snapshot_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "surprise_value": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+    "surprise_standardized": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "scheduled_announcement_at": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    },
+    "schedule_record_id": {"type": ["string", "null"], "maxLength": 200}
+  }
+}

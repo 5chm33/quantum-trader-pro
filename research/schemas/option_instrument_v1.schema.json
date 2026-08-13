@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_instrument_v1.schema.json",
+  "title": "Quantum Trader Pro Option Instrument Definition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "underlying_security",
+    "availability",
+    "provenance",
+    "occ_symbol",
+    "root_symbol",
+    "option_class",
+    "right",
+    "strike",
+    "expiration_at",
+    "last_trade_at",
+    "contract_multiplier",
+    "exercise_style",
+    "settlement_type",
+    "settlement_currency",
+    "deliverable_version",
+    "status"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.option_instrument.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "underlying_security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "occ_symbol": {"type": "string", "pattern": "^[A-Z0-9 .]{15,30}$"},
+    "root_symbol": {"type": "string", "pattern": "^[A-Z0-9.]{1,8}$"},
+    "option_class": {"enum": ["equity", "etf", "index"]},
+    "right": {"enum": ["call", "put"]},
+    "strike": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "expiration_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "last_trade_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "contract_multiplier": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "exercise_style": {"enum": ["american", "european", "bermudan", "unknown"]},
+    "settlement_type": {"enum": ["physical", "cash", "mixed", "unknown"]},
+    "settlement_currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "settlement_timing": {"enum": ["am", "pm", "intraday", "unknown"]},
+    "auto_exercise_rule_version": {"type": ["string", "null"], "maxLength": 100},
+    "deliverable_version": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "deliverables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["deliverable_type", "quantity"],
+        "properties": {
+          "deliverable_type": {"enum": ["security", "cash", "other"]},
+          "instrument_id": {"type": ["string", "null"], "maxLength": 80},
+          "quantity": {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"},
+          "currency": {"type": ["string", "null"], "pattern": "^([A-Z]{3})?$"},
+          "description": {"type": ["string", "null"], "maxLength": 500}
+        }
+      }
+    },
+    "occ_memo_uri": {"type": ["string", "null"], "format": "uri", "maxLength": 2048},
+    "occ_memo_sha256": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/sha256"}]
+    },
+    "listing_exchange": {"type": "string", "minLength": 1, "maxLength": 32},
+    "minimum_tick": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "status": {"enum": ["active", "expired", "adjusted", "suspended", "delisted"]}
+  }
+}

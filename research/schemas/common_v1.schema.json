@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/common_v1.schema.json",
+  "title": "Quantum Trader Pro Common Point-in-Time Types v1",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utc_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-]00:00)$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "nonnegative_decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "positive_decimal": {
+      "type": "string",
+      "pattern": "^(0\\.[0-9]*[1-9][0-9]*|[1-9][0-9]*(\\.[0-9]+)?)$"
+    },
+    "record_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "record_version", "revision", "is_correction"],
+      "properties": {
+        "record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+        "record_version": {"type": "integer", "minimum": 1},
+        "revision": {"type": "integer", "minimum": 0},
+        "is_correction": {"type": "boolean"},
+        "supersedes_record_id": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"}
+          ]
+        }
+      }
+    },
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_at", "available_at", "captured_at"],
+      "properties": {
+        "event_at": {"$ref": "#/$defs/utc_timestamp"},
+        "published_at": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/utc_timestamp"}]
+        },
+        "available_at": {"$ref": "#/$defs/utc_timestamp"},
+        "captured_at": {"$ref": "#/$defs/utc_timestamp"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "dataset",
+        "provider_schema_version",
+        "source_uri",
+        "license_class",
+        "redistribution_allowed",
+        "raw_sha256",
+        "query_sha256",
+        "transform_version"
+      ],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1, "maxLength": 100},
+        "dataset": {"type": "string", "minLength": 1, "maxLength": 160},
+        "provider_schema_version": {"type": "string", "minLength": 1, "maxLength": 100},
+        "source_uri": {"type": "string", "format": "uri", "maxLength": 2048},
+        "license_class": {
+          "enum": ["open", "licensed_nonredistributable", "private", "synthetic"]
+        },
+        "redistribution_allowed": {"type": "boolean"},
+        "raw_sha256": {"$ref": "#/$defs/sha256"},
+        "query_sha256": {"$ref": "#/$defs/sha256"},
+        "transform_version": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+        "source_sequence": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0}]}
+      }
+    },
+    "security_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instrument_id", "asset_class", "currency"],
+      "properties": {
+        "instrument_id": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9._:-]{1,79}$"},
+        "asset_class": {"enum": ["equity", "etf", "index", "option", "cash", "rate"]},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "symbol": {"type": ["string", "null"], "maxLength": 32},
+        "exchange": {"type": ["string", "null"], "maxLength": 32},
+        "cik": {"type": ["string", "null"], "pattern": "^([0-9]{10})?$"}
+      }
+    }
+  }
+}

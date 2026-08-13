@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/equity_bar_v1.schema.json",
+  "title": "Quantum Trader Pro Equity Bar v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "interval",
+    "session",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "finality"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.equity_bar.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "interval": {"enum": ["1m", "5m", "15m", "1h", "1d"]},
+    "session": {"enum": ["regular", "extended", "auction", "unknown"]},
+    "open": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "high": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "low": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "close": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "volume": {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"},
+    "trade_count": {"type": ["integer", "null"], "minimum": 0},
+    "vwap": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    },
+    "adjusted_close": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    },
+    "split_adjustment_factor": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    },
+    "total_return_factor": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    },
+    "condition_codes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 32},
+      "uniqueItems": true
+    },
+    "finality": {"enum": ["preliminary", "final", "corrected"]}
+  }
+}

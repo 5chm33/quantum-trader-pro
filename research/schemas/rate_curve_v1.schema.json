@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/rate_curve_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Rate Curve v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "availability",
+    "provenance",
+    "curve_id",
+    "currency",
+    "curve_type",
+    "day_count_convention",
+    "compounding",
+    "vintage_date",
+    "nodes"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.rate_curve.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "curve_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "curve_type": {"enum": ["risk_free_proxy", "treasury_par", "overnight_index", "funding", "borrow"]},
+    "collateral_basis": {"type": ["string", "null"], "maxLength": 100},
+    "day_count_convention": {"enum": ["ACT_365F", "ACT_360", "ACT_ACT", "THIRTY_360", "OTHER"]},
+    "compounding": {"enum": ["simple", "annual", "continuous"]},
+    "vintage_date": {"$ref": "common_v1.schema.json#/$defs/date"},
+    "interpolation_method": {"enum": ["none", "linear_zero", "linear_discount", "log_discount", "other"]},
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tenor_days", "rate", "instrument_type"],
+        "properties": {
+          "tenor_days": {"type": "integer", "minimum": 0, "maximum": 36500},
+          "rate": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+          "instrument_type": {"enum": ["cash", "treasury_bill", "treasury_note", "treasury_bond", "overnight_index", "swap", "synthetic"]},
+          "maturity_date": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/date"}]},
+          "source_series_id": {"type": ["string", "null"], "maxLength": 100}
+        }
+      }
+    }
+  }
+}

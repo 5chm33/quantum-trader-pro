@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_trade_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Option Trade v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "price",
+    "size",
+    "venue",
+    "condition_codes",
+    "underlying_snapshot_record_id"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.option_trade.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "price": {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"},
+    "size": {"type": "integer", "minimum": 1},
+    "venue": {"type": "string", "minLength": 1, "maxLength": 32},
+    "condition_codes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 32},
+      "uniqueItems": true
+    },
+    "sequence_number": {"type": ["integer", "null"], "minimum": 0},
+    "exchange_trade_id": {"type": ["string", "null"], "maxLength": 128},
+    "prior_quote_record_id": {"type": ["string", "null"], "maxLength": 200},
+    "underlying_snapshot_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"}
+  }
+}

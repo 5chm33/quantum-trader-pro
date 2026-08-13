@@ -1,0 +1,115 @@
+{
+  "contract_count": 18,
+  "contracts": [
+    {
+      "filename": "borrow_snapshot_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/borrow_snapshot_v1.schema.json",
+      "sha256": "79dbc8065898472fd29d182853bfcdf38e6eab343df31cf1862549db575d4155",
+      "title": "Quantum Trader Pro Point-in-Time Borrow Snapshot v1"
+    },
+    {
+      "filename": "common_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/common_v1.schema.json",
+      "sha256": "5ed639fc2dc2157252ec80e26b164dbeaaad855946ea34128ed7e75a96cd8cb1",
+      "title": "Quantum Trader Pro Common Point-in-Time Types v1"
+    },
+    {
+      "filename": "corporate_action_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/corporate_action_v1.schema.json",
+      "sha256": "b57031c56ed0c98adda37e45f239ff362073772abb5c37a5581812b51538d806",
+      "title": "Quantum Trader Pro Point-in-Time Corporate Action v1"
+    },
+    {
+      "filename": "data_snapshot_manifest_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/data_snapshot_manifest_v1.schema.json",
+      "sha256": "0145fd9dc16e478935bbd4b07be5a049fc33b07b6fe34945fff04515ed29397d",
+      "title": "Quantum Trader Pro Immutable Data Snapshot Manifest v1"
+    },
+    {
+      "filename": "dividend_input_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/dividend_input_v1.schema.json",
+      "sha256": "bf6d0fdf33fadf21578dc048e6043a7db385534eceba367f458014c8d551b701",
+      "title": "Quantum Trader Pro Point-in-Time Dividend Input v1"
+    },
+    {
+      "filename": "earnings_estimate_snapshot_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/earnings_estimate_snapshot_v1.schema.json",
+      "sha256": "9ee25a49017ae2e35aece625dbe2424d7f1517ac2f5ed64f70cb34bfb2286930",
+      "title": "Quantum Trader Pro Point-in-Time Earnings Estimate Snapshot v1"
+    },
+    {
+      "filename": "earnings_event_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/earnings_event_v1.schema.json",
+      "sha256": "bdf5aa3edaed318068c5f7f44ab483b5b191fd41c787b9d22495f7d4fce89f9a",
+      "title": "Quantum Trader Pro Point-in-Time Earnings Event v1"
+    },
+    {
+      "filename": "equity_bar_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/equity_bar_v1.schema.json",
+      "sha256": "295a46835f1b9d0cd1f4e388b8ec2304a0696dc1d67c94db14b6eb2a756a0e70",
+      "title": "Quantum Trader Pro Equity Bar v1"
+    },
+    {
+      "filename": "fundamental_fact_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/fundamental_fact_v1.schema.json",
+      "sha256": "f184086ad9dee2fed43c53d1f2a5657353a9a5cfb9b886eb65010e020860d3e0",
+      "title": "Quantum Trader Pro Point-in-Time Fundamental Fact v1"
+    },
+    {
+      "filename": "market_session_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/market_session_v1.schema.json",
+      "sha256": "477aa0cdfd43d726bea59c210f848a6310528c1fbff13ab5b4dcda6159a4a65a",
+      "title": "Quantum Trader Pro Point-in-Time Market Session v1"
+    },
+    {
+      "filename": "option_greeks_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_greeks_v1.schema.json",
+      "sha256": "dad60d4dffb156a38dcbc6c8622e2d661ddb75fd01930f6d273082e633304b59",
+      "title": "Quantum Trader Pro Point-in-Time Option Valuation and Greeks v1"
+    },
+    {
+      "filename": "option_instrument_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_instrument_v1.schema.json",
+      "sha256": "7f4c7ecae812be44e4e21a558d4ac3f6862f4af26dcbba0a9cb165417cfe025b",
+      "title": "Quantum Trader Pro Option Instrument Definition v1"
+    },
+    {
+      "filename": "option_quote_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_quote_v1.schema.json",
+      "sha256": "7bedcf3c006ab5a26ea199f917dc5f3ff194ad2165f00b73d6c8fd62dfe25ae1",
+      "title": "Quantum Trader Pro Point-in-Time Option Quote v1"
+    },
+    {
+      "filename": "option_trade_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_trade_v1.schema.json",
+      "sha256": "88528fcb3202705506d4ceb56d2f8bbaf463655089f911b570315c9a20fd3006",
+      "title": "Quantum Trader Pro Point-in-Time Option Trade v1"
+    },
+    {
+      "filename": "rate_curve_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/rate_curve_v1.schema.json",
+      "sha256": "de7b7680c9e2d2e2c44db66e99db923aa1f7e9269bdfeb152c05e09826fb03f8",
+      "title": "Quantum Trader Pro Point-in-Time Rate Curve v1"
+    },
+    {
+      "filename": "universe_membership_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/universe_membership_v1.schema.json",
+      "sha256": "f960a623a2d97331be50e9f08b73cdefdcc5b0e4311546fcdba7f6704b925960",
+      "title": "Quantum Trader Pro Point-in-Time Universe Membership v1"
+    },
+    {
+      "filename": "volatility_surface_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/volatility_surface_v1.schema.json",
+      "sha256": "75af602b292ccb03c5519a4a176424e7674e6e53d0a04969267c992db622dcdc",
+      "title": "Quantum Trader Pro Point-in-Time Volatility Surface v1"
+    },
+    {
+      "filename": "volatility_term_structure_v1.schema.json",
+      "schema_id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/volatility_term_structure_v1.schema.json",
+      "sha256": "9ecde855b7ae5996febd200e245e390ea9ed7dd792406f444e3c15a917fec93a",
+      "title": "Quantum Trader Pro Point-in-Time Volatility Term Structure v1"
+    }
+  ],
+  "json_schema_draft": "https://json-schema.org/draft/2020-12/schema",
+  "manifest_id": "qtpro.point_in_time_data_contracts.v1"
+}

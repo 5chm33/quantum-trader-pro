@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/universe_membership_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Universe Membership v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "universe_id",
+    "selection_rule_version",
+    "membership_action",
+    "effective_from",
+    "eligibility_reasons"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.universe_membership.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "universe_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "selection_rule_version": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "membership_action": {"enum": ["add", "retain", "remove", "suspend", "delist"]},
+    "effective_from": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "effective_until": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    },
+    "listing_status": {"enum": ["active", "suspended", "delisted", "unknown"]},
+    "eligibility_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+      "uniqueItems": true
+    },
+    "market_cap_at_decision": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "median_dollar_volume_at_decision": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "price_at_decision": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/positive_decimal"}]
+    }
+  }
+}

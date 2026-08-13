@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/borrow_snapshot_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Borrow Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "borrow_status",
+    "available_quantity",
+    "annualized_fee_rate",
+    "locate_required"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.borrow_snapshot.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "borrow_status": {"enum": ["easy_to_borrow", "hard_to_borrow", "unavailable", "unknown"]},
+    "available_quantity": {"type": ["integer", "null"], "minimum": 0},
+    "annualized_fee_rate": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "annualized_rebate_rate": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "locate_required": {"type": "boolean"},
+    "locate_id": {"type": ["string", "null"], "maxLength": 128},
+    "locate_expires_at": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    }
+  }
+}
