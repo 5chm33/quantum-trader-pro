@@ -5,9 +5,9 @@
 | Field | Accepted value |
 |---|---|
 | Deployment date | 2026-08-13 UTC |
-| Source commit | `454afec9ce7e06041517b74004ef19acd331db5e` |
-| Wheel SHA-256 | `4f95cb1b46ec1515b1a085ab1c70dcaa13868359da7f818146afcd42bb1d9a8d` |
-| Runtime | CPython 3.11.15 in `/opt/quantum-trader-pro/venv` |
+| Source commit | `b60e311c53ff0111a2b2ade22d8d96c51e61042f` |
+| Wheel SHA-256 | `dea83cda1fb32654a0eb840c27ed60b6590c1de823af6716416a1cb651b34060` |
+| Runtime | CPython 3.11.15 in `/opt/quantum-trader-runtime-b60e311c53ff`, linked at `/opt/quantum-trader-pro/venv` |
 | Service type | Finite, manually requested `systemd` one-shot simulation |
 | Service state after acceptance | **Disabled and inactive** |
 | Live execution | **Unavailable** |
@@ -17,7 +17,7 @@
 
 The accepted source archive and wheel were checksummed before transfer and independently verified on the cloud computer. The package was installed from the wheel with `--no-index --no-deps`, so deployment did not resolve or download runtime dependencies. The source and environment are root-owned; execution uses the dedicated non-login `quantumtrader` account.
 
-The first atomic installer uncovered a movable-virtual-environment defect: a generated console-script shebang retained the temporary staging path after the directory was renamed. The service was disabled and inactive, so no workload started. The environment was rebuilt at its final stable path from the already verified wheel. The resulting shebang points to `/opt/quantum-trader-pro/venv/bin/python`. The prior deployment remains preserved at `/opt/quantum-trader-pro.rollback.20260813T001403Z`.
+The first atomic installer uncovered a movable-virtual-environment defect: a generated console-script shebang retained the temporary staging path after the directory was renamed. The service was disabled and inactive, so no workload started. The v0.2.0 synchronization resolved the defect by building the environment directly at the stable versioned path `/opt/quantum-trader-runtime-b60e311c53ff` and linking it into the source tree only after validation. The original baseline and the prior accepted checkpoint remain preserved at `/opt/quantum-trader-pro.rollback.20260813T001403Z` and `/opt/quantum-trader-pro.rollback.20260813T002534Z`.
 
 ## Effective Runtime Boundary
 
@@ -56,7 +56,8 @@ All six core artifacts were byte-for-byte identical across the independent runs:
 | Path | Accepted mode and owner |
 |---|---|
 | `/opt/quantum-trader-pro` | `0755 root:root` |
-| `/opt/quantum-trader-pro/venv` | `0755 root:root` |
+| `/opt/quantum-trader-runtime-b60e311c53ff` | `0755 root:root` |
+| `/opt/quantum-trader-pro/venv` | root-owned link to the versioned runtime |
 | `/etc/quantum-trader` | `0750 root:quantumtrader` |
 | `/var/lib/quantum-trader` | `0750 quantumtrader:quantumtrader` |
 | `/srv/quantum-trader-data/spy_daily.csv` | `0640 root:quantumtrader` |

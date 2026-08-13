@@ -54,7 +54,7 @@ All notable changes to Quantum Trader Pro are documented in this file.
 - Retained 2,604 preregistered trials across six assets and 84 untouched base-cost folds; the strategy failed its pre-holdout gate with −2.27% median excess return and 15.48% positive-fold share.
 - Repeated the complete pre-holdout evaluation independently and confirmed every core artifact was byte-for-byte identical.
 - Preserved the final 252 observations per asset unopened because the pre-holdout evidence did not pass.
-- Installed accepted commit `454afec9ce7e06041517b74004ef19acd331db5e` from an offline checksummed wheel on the cloud computer, retained rollback, measured a 2.1 `systemd` exposure score, and reproduced all six core simulation artifacts byte-for-byte across two network-isolated runs.
+- Installed exact v0.2.0 commit `b60e311c53ff0111a2b2ade22d8d96c51e61042f` from an offline checksummed wheel on the cloud computer, retained two rollback checkpoints, measured a 2.1 `systemd` exposure score, and reproduced all six core simulation artifacts byte-for-byte across two network-isolated runs.
 - Left the installed simulation service disabled and inactive with no public paper command, authenticated paper acceptance, flatten action, or live execution path.
 
 ## [0.1.0] — 2026-08-12
