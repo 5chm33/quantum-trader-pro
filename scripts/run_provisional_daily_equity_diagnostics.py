@@ -289,7 +289,7 @@ def _volatility_matched_equal_weight(
     output: list[Decimal] = []
     for index in range(first_index, last_index + 1):
         history = tuple(
-            equal_weight_returns[position] for position in range(index - window + 1, index + 1)
+            equal_weight_returns[position - 1] for position in range(index - window + 1, index + 1)
         )
         if len(history) < minimum_observations:
             multiplier = _ONE
@@ -297,7 +297,7 @@ def _volatility_matched_equal_weight(
             realized = _annualized_volatility(history)
             multiplier = _ONE if realized == _ZERO else target / realized
             multiplier = min(upper, max(lower, multiplier))
-        output.append(multiplier * equal_weight_returns[index + 1])
+        output.append(multiplier * equal_weight_returns[index])
     return tuple(output)
 
 
