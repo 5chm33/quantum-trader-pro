@@ -78,6 +78,7 @@ jobs:
           uv run python -m py_compile launch_demo.py scripts/*.py tests/helpers/*.py
           uv run python scripts/check-doc-links.py
           uv run python scripts/verify-evaluation-evidence.py
+          uv run python scripts/verify-strategy-governance.py
           uv run python scripts/verify-workflow-security.py
 
       - name: Build source and wheel distributions
