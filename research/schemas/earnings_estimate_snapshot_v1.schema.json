@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/earnings_estimate_snapshot_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Earnings Estimate Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "fiscal_period_end",
+    "metric",
+    "currency",
+    "estimate_mean",
+    "estimate_median",
+    "estimate_count",
+    "window_cutoff_at"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.earnings_estimate_snapshot.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "fiscal_period_end": {"$ref": "common_v1.schema.json#/$defs/date"},
+    "fiscal_period": {"enum": ["Q1", "Q2", "Q3", "Q4", "FY", "OTHER"]},
+    "metric": {"enum": ["diluted_eps", "basic_eps", "revenue"]},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "estimate_mean": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+    "estimate_median": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+    "estimate_low": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "estimate_high": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "estimate_standard_deviation": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "estimate_count": {"type": "integer", "minimum": 1},
+    "window_cutoff_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "estimate_window_days": {"type": "integer", "minimum": 1, "maximum": 365}
+  }
+}

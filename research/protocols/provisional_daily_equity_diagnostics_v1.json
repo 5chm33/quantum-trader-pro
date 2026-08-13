@@ -1,0 +1,79 @@
+{
+  "protocol_id": "qtpro-provisional-daily-equity-diagnostics-v1",
+  "protocol_version": "1.0.0",
+  "classification": "provisional_nonpromotion_diagnostics_only",
+  "purpose": "Add independent benchmark alignment, descriptive return-attribution, and asset-level diagnostics to the completed provisional H01/H04 result without changing a candidate parameter, creating a candidate, opening a holdout, or authorizing execution.",
+  "parent_result": {
+    "protocol_id": "qtpro-provisional-daily-equity-v1",
+    "protocol_sha256": "dd3e6136546f9e58ca732b0bcfc8c73a12b7f9a7adf07ea0204d35ba3040c406",
+    "snapshot_id": "qtpro-provisional-daily-equity-snapshot-v1",
+    "snapshot_content_sha256": "5c7ae8818605635b50f7bca5fb70d60b2e696fd7df8c2b74ebbb760354cf3923",
+    "summary_sha256": "0f2b5b228c1a0aa63b85e0a13b92fa37d2d8b39828c6d1928219eca0ffbb610b",
+    "candidate_id": "qtpro.h01h04.provisional.001",
+    "candidate_code_commit": "b0de478865e3dc55b7bda14518195b51966e5fd7"
+  },
+  "benchmark_alignment": {
+    "market_reference": {
+      "id": "spy_total_return_proxy",
+      "description": "SPY adjusted-close daily return as a total-return proxy; adjustment availability and construction remain unverified."
+    },
+    "cash_plus_equity": {
+      "id": "cash_plus_spy_60_40_daily_rebalanced",
+      "equity_weight": "0.60",
+      "cash_weight": "0.40",
+      "cash_return": "0.00",
+      "description": "Daily-rebalanced 60% SPY adjusted-return proxy and 40% zero-return cash. It is not a cash-rate benchmark because no point-in-time rate input is admitted."
+    },
+    "volatility_matched": {
+      "id": "volatility_matched_equal_weight",
+      "underlying": "equal_weight_buy_and_hold",
+      "volatility_window_bars": 63,
+      "minimum_observations": 42,
+      "target_annualized_volatility": "0.12",
+      "annualization_observations": 252,
+      "minimum_exposure_multiplier": "0.00",
+      "maximum_exposure_multiplier": "1.50",
+      "rebalance_frequency_bars": 21,
+      "description": "Causally scaled equal-weight basket using the same declared trailing-window, target, cap, and 21-bar rebalancing conventions as the H04 candidate."
+    }
+  },
+  "attribution": {
+    "market_beta_reference": "spy_total_return_proxy",
+    "bridge_order": [
+      "market_reference",
+      "equal_weight_allocation_relative_to_market",
+      "trend_timing_relative_to_equal_weight",
+      "volatility_scaling_relative_to_trend",
+      "turnover_cost_sensitivity"
+    ],
+    "cost_scenarios_bps_per_one_way_turn": [
+      "0",
+      "5",
+      "15"
+    ],
+    "limitation": "The bridge is descriptive and non-additive. It is not a formal factor model, a causal attribution, or a source of candidate retuning."
+  },
+  "asset_level": {
+    "symbols": [
+      "EFA",
+      "GLD",
+      "IWM",
+      "QQQ",
+      "SPY",
+      "TLT"
+    ],
+    "candidate_sleeve": "For each asset, apply the fixed parent H01 direction and H04 multiplier to that asset's next daily adjusted-close return without the parent portfolio's 1/N weight. Compare only as a diagnostic against that asset's buy-and-hold adjusted-price proxy."
+  },
+  "data_adjustment_boundary": {
+    "adjusted_price_decision_safety": "unverified",
+    "required_interpretation": "Adjusted closes may retrospectively incorporate distributions or splits whose availability timing is not retained. The diagnostic must label this potential leakage and must not assert that adjusted-close inputs were usable at the simulated decision time."
+  },
+  "forbidden_actions": [
+    "modify parent candidate parameters, universe, folds, costs, or return timing",
+    "register a replacement candidate",
+    "change candidate state beyond development",
+    "create, retrieve, seal, approve, or open a holdout",
+    "claim alpha, a strategy grade, statistical significance, or investability",
+    "evaluate options or create paper or live orders"
+  ]
+}

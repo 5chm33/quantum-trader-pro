@@ -1,0 +1,3 @@
+baseline_commit=25c7ba800360d5a235312496dc52c8df2941eec4
+release_tag_commit=1f6d993136573a66514485b7a67bfcba05b04288
+cloud_runtime_commit=b60e311c53ff0111a2b2ade22d8d96c51e61042f

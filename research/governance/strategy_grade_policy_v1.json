@@ -1,0 +1,90 @@
+{
+  "policy_id": "qtpro-strategy-grade-v1",
+  "policy_version": "1.0.0",
+  "frozen_on": "2026-08-12",
+  "baseline": {
+    "main_commit": "25c7ba800360d5a235312496dc52c8df2941eec4",
+    "release_tag": "v0.2.0",
+    "release_tag_commit": "1f6d993136573a66514485b7a67bfcba05b04288",
+    "cloud_runtime_commit": "b60e311c53ff0111a2b2ade22d8d96c51e61042f",
+    "v1_protocol_sha256": "becf6ad29b0649c7f97c76fb149d41eeb6bac92760f1ff616e4772a596d1acb5",
+    "v1_holdout_status": "locked_unopened"
+  },
+  "score": {
+    "a_plus_minimum": 95.0,
+    "hard_gates_required": true,
+    "caps": {
+      "before_locked_holdout": "A-",
+      "before_authenticated_shadow_and_paper": "A",
+      "without_options_acceptance": "A_equity_only"
+    },
+    "weights": {
+      "economic_hypothesis": 10,
+      "point_in_time_data": 10,
+      "net_out_of_sample_performance": 20,
+      "statistical_credibility": 10,
+      "drawdown_and_tail_behavior": 10,
+      "asset_and_regime_stability": 10,
+      "cost_liquidity_turnover_capacity": 10,
+      "options_lifecycle_and_risk": 10,
+      "shadow_and_paper_acceptance": 10
+    }
+  },
+  "mandatory_gate_categories": [
+    "candidate_budget",
+    "point_in_time_data",
+    "total_return_and_risk_matched_benchmarks",
+    "train_validation_test_lockbox_separation",
+    "multiple_testing_adjustment",
+    "spread_fees_impact_participation_and_borrow_costs",
+    "capacity_scaling",
+    "asset_regime_factor_and_trade_concentration",
+    "parameter_start_date_cost_delay_missing_data_and_placebo_robustness",
+    "drawdown_expected_shortfall_gap_leverage_liquidity_and_greeks",
+    "independent_reproducibility",
+    "automatic_rejection_on_any_mandatory_failure"
+  ],
+  "options_scope": {
+    "evidence_requires_real_point_in_time_contract_data": true,
+    "initially_allowed": [
+      "long_call",
+      "long_put",
+      "vertical_debit_spread",
+      "vertical_credit_spread",
+      "covered_call",
+      "cash_secured_put"
+    ],
+    "prohibited": [
+      "naked_short_option",
+      "unbounded_loss_structure",
+      "automated_0dte",
+      "silent_theoretical_fill_substitution",
+      "live_multi_leg_execution"
+    ],
+    "required_lifecycle_models": [
+      "greeks",
+      "contract_adjustments",
+      "early_exercise",
+      "assignment",
+      "expiry",
+      "multiplier_and_deliverable_changes",
+      "multi_leg_partial_fills"
+    ]
+  },
+  "holdout": {
+    "existing_v1_holdout_must_remain_sealed": true,
+    "new_campaign_uses_separate_lockbox": true,
+    "bytes_must_not_be_retrieved_during_development": true,
+    "immutable_receipt_required": true,
+    "explicit_user_approval_required": true,
+    "failed_holdout_must_be_published": true,
+    "failed_holdout_cannot_select_same_campaign": true
+  },
+  "execution": {
+    "public_paper_command_allowed": false,
+    "live_execution_allowed": false,
+    "shadow_required_before_paper": true,
+    "authenticated_paper_required_for_a_plus": true,
+    "real_money_activation_is_separate_project": true
+  }
+}

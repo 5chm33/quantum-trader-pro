@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/market_session_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Market Session v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "availability",
+    "provenance",
+    "calendar_id",
+    "venue",
+    "session_date",
+    "session_status",
+    "regular_open_at",
+    "regular_close_at",
+    "halts"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.market_session.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "calendar_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "venue": {"type": "string", "minLength": 1, "maxLength": 32},
+    "session_date": {"$ref": "common_v1.schema.json#/$defs/date"},
+    "session_status": {"enum": ["open", "closed_holiday", "early_close", "emergency_closed", "unknown"]},
+    "regular_open_at": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    },
+    "regular_close_at": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    },
+    "extended_open_at": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    },
+    "extended_close_at": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+    },
+    "halts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["instrument_id", "halted_at", "announced_at", "reason_code", "status"],
+        "properties": {
+          "instrument_id": {"type": "string", "maxLength": 80},
+          "halted_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+          "announced_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+          "resumed_at": {
+            "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"}]
+          },
+          "reason_code": {"type": "string", "minLength": 1, "maxLength": 64},
+          "status": {"enum": ["halted", "resume_announced", "resumed", "unknown"]}
+        }
+      }
+    }
+  }
+}

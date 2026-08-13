@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_quote_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Option Quote v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "quote_scope",
+    "bid_price",
+    "ask_price",
+    "bid_size",
+    "ask_size",
+    "market_state",
+    "condition_codes",
+    "underlying_snapshot_record_id"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.option_quote.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "quote_scope": {"enum": ["nbbo", "venue_bbo", "provider_composite"]},
+    "venue": {"type": ["string", "null"], "maxLength": 32},
+    "bid_price": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "ask_price": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "bid_size": {"type": ["integer", "null"], "minimum": 0},
+    "ask_size": {"type": ["integer", "null"], "minimum": 0},
+    "bid_exchange": {"type": ["string", "null"], "maxLength": 32},
+    "ask_exchange": {"type": ["string", "null"], "maxLength": 32},
+    "market_state": {"enum": ["two_sided", "one_sided", "locked", "crossed", "halted", "closed", "unknown"]},
+    "condition_codes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 32},
+      "uniqueItems": true
+    },
+    "sequence_number": {"type": ["integer", "null"], "minimum": 0},
+    "underlying_snapshot_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"}
+  },
+  "anyOf": [
+    {"required": ["bid_price", "bid_size"], "properties": {"bid_price": {"type": "string"}, "bid_size": {"type": "integer"}}},
+    {"required": ["ask_price", "ask_size"], "properties": {"ask_price": {"type": "string"}, "ask_size": {"type": "integer"}}}
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/option_greeks_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Option Valuation and Greeks v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "calculation_origin",
+    "model_id",
+    "model_version",
+    "option_quote_record_id",
+    "underlying_snapshot_record_id",
+    "rate_curve_record_id",
+    "dividend_input_record_id",
+    "calculation_at",
+    "option_price_input",
+    "underlying_price_input",
+    "risk_free_rate",
+    "dividend_yield",
+    "time_to_expiration_years",
+    "convergence_status",
+    "arbitrage_flags"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.option_greeks.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "calculation_origin": {"enum": ["provider", "independent"]},
+    "model_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "model_version": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,99}$"},
+    "option_quote_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "underlying_snapshot_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "rate_curve_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "dividend_input_record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{7,199}$"},
+    "borrow_input_record_id": {"type": ["string", "null"], "maxLength": 200},
+    "calculation_at": {"$ref": "common_v1.schema.json#/$defs/utc_timestamp"},
+    "option_price_input": {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"},
+    "underlying_price_input": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "risk_free_rate": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+    "dividend_yield": {"$ref": "common_v1.schema.json#/$defs/decimal"},
+    "borrow_rate": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "time_to_expiration_years": {"$ref": "common_v1.schema.json#/$defs/positive_decimal"},
+    "implied_volatility": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "model_price": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"}]
+    },
+    "price_residual": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "delta": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "gamma": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "vega": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "theta_per_day": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "rho": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "vanna": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "volga": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]},
+    "convergence_status": {"enum": ["converged", "not_converged", "not_applicable", "provider_reported"]},
+    "arbitrage_flags": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "negative_time_value",
+          "below_intrinsic",
+          "above_upper_bound",
+          "crossed_market",
+          "non_monotone_strike",
+          "non_monotone_expiry",
+          "calendar_violation",
+          "butterfly_violation"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}

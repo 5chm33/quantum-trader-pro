@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/5chm33/quantum-trader-pro/research/schemas/dividend_input_v1.schema.json",
+  "title": "Quantum Trader Pro Point-in-Time Dividend Input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "identity",
+    "security",
+    "availability",
+    "provenance",
+    "method",
+    "currency",
+    "horizon_end",
+    "cash_flows"
+  ],
+  "properties": {
+    "schema_id": {"const": "qtpro.dividend_input.v1"},
+    "identity": {"$ref": "common_v1.schema.json#/$defs/record_identity"},
+    "security": {"$ref": "common_v1.schema.json#/$defs/security_identity"},
+    "availability": {"$ref": "common_v1.schema.json#/$defs/availability"},
+    "provenance": {"$ref": "common_v1.schema.json#/$defs/provenance"},
+    "method": {"enum": ["announced_only", "provider_forecast", "historical_carry_forward", "implied", "zero_dividend"]},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "horizon_end": {"$ref": "common_v1.schema.json#/$defs/date"},
+    "continuous_yield": {
+      "oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/decimal"}]
+    },
+    "cash_flows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ex_date", "amount", "status"],
+        "properties": {
+          "ex_date": {"$ref": "common_v1.schema.json#/$defs/date"},
+          "record_date": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/date"}]},
+          "payable_date": {"oneOf": [{"type": "null"}, {"$ref": "common_v1.schema.json#/$defs/date"}]},
+          "amount": {"$ref": "common_v1.schema.json#/$defs/nonnegative_decimal"},
+          "status": {"enum": ["announced", "confirmed", "forecast", "estimated"]},
+          "corporate_action_record_id": {"type": ["string", "null"], "maxLength": 200}
+        }
+      }
+    }
+  }
+}

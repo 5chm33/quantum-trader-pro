@@ -1,0 +1,29 @@
+flowchart TD
+  A[Provider payload] --> B[Immutable raw bytes\nSHA-256 + query identity]
+  B --> C[Versioned normalizer]
+  C --> D[Point-in-time record\nevent · publish · available · capture]
+  D --> E{available_at ≤\ndecision cutoff?}
+  E -- No --> F[Quarantine\nNo feature access]
+  E -- Yes --> G[Validated record set]
+
+  I[Option instrument\nOCC deliverable version] --> J[Quote + trade]
+  K[Underlying snapshot] --> L[Independent valuation + Greeks]
+  M[Rate curve + dividend input] --> L
+  J --> L
+  L --> N[Volatility surface\nquality + arbitrage flags]
+
+  G --> O[Immutable data snapshot manifest]
+  N --> O
+  P[Code commit + uv.lock] --> O
+  Q[Schema hash manifest] --> O
+  R[Experiment ledger + holdout seal] --> O
+  O --> S[Reproducible experiment]
+  O --> T[Public evidence\nschemas · checksums · diagnostics]
+  B --> U[Private licensed rows\nOPRA or vendor data]
+
+  classDef gate fill:#fff4d6,stroke:#b7791f,color:#3b2f00
+  classDef safe fill:#e6fffa,stroke:#2c7a7b,color:#103f40
+  classDef private fill:#fff5f5,stroke:#c53030,color:#521b1b
+  class E gate
+  class G,O,S,T safe
+  class F,U private

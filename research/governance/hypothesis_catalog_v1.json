@@ -1,0 +1,27 @@
+{
+  "catalog_id": "qtpro-strategy-hypotheses-v1",
+  "status": "literature_screened_not_preregistered",
+  "created_at_utc": "2026-08-13T00:00:00Z",
+  "rules": {
+    "candidate_ceilings_are_upper_bounds": true,
+    "all_attempts_must_enter_experiment_ledger": true,
+    "hierarchical_multiple_testing_required": true,
+    "provider_market_data_required_for_empirical_options_grade": true,
+    "indicative_options_quotes_for_grade": false,
+    "live_execution_allowed": false
+  },
+  "families": [
+    {"id":"H01","name":"time_series_trend","role":"core_forecast","evidence":"strong_with_scaling_caveat","data_readiness":"high","candidate_ceiling":6},
+    {"id":"H02","name":"cross_sectional_momentum","role":"core_forecast","evidence":"strong_with_crash_and_turnover_risk","data_readiness":"high","candidate_ceiling":6},
+    {"id":"H03","name":"liquidity_shock_reversal","role":"conditional_forecast","evidence":"mixed_and_cost_sensitive","data_readiness":"medium","candidate_ceiling":4},
+    {"id":"H04","name":"volatility_targeting","role":"portfolio_overlay_and_baseline","evidence":"strong_as_risk_overlay_not_alpha_proof","data_readiness":"high","candidate_ceiling":4},
+    {"id":"H05","name":"defensive_factors","role":"core_forecast","evidence":"strong_but_regime_dependent","data_readiness":"medium","candidate_ceiling":4},
+    {"id":"H06","name":"post_earnings_drift","role":"event_forecast","evidence":"established_but_potentially_decayed","data_readiness":"medium_low","candidate_ceiling":4},
+    {"id":"H07","name":"diversified_forecast_portfolio","role":"meta_portfolio","evidence":"conditional_on_component_survival","data_readiness":"high_after_components","candidate_ceiling":4},
+    {"id":"H08","name":"defined_risk_volatility_premium","role":"options_forecast","evidence":"premium_exists_with_left_tail_compensation","data_readiness":"blocked_pending_point_in_time_options","candidate_ceiling":6},
+    {"id":"H09","name":"volatility_term_structure_and_skew","role":"options_relative_value_forecast","evidence":"promising_but_cost_sensitive","data_readiness":"blocked_pending_point_in_time_options","candidate_ceiling":6},
+    {"id":"H10","name":"trend_conditioned_calls","role":"options_convex_forecast","evidence":"underlying_mechanism_stronger_than_options_evidence","data_readiness":"blocked_pending_point_in_time_options","candidate_ceiling":4},
+    {"id":"H11","name":"conditional_tail_overlay","role":"portfolio_insurance","evidence":"mixed_and_path_dependent","data_readiness":"blocked_pending_point_in_time_options","candidate_ceiling":4},
+    {"id":"H12","name":"covered_calls_and_collateralized_puts","role":"permanent_options_baseline","evidence":"credible_risk_premium_with_equity_downside","data_readiness":"blocked_pending_point_in_time_options","candidate_ceiling":4}
+  ]
+}

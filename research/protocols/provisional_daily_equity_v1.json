@@ -1,0 +1,91 @@
+{
+  "protocol_id": "qtpro-provisional-daily-equity-v1",
+  "protocol_version": "1.0.0",
+  "classification": "provisional_nonpromotion_falsification_only",
+  "purpose": "Reject weak daily equity and ETF trend-volatility hypotheses using a reproducible adjusted-price prototype. Results are development evidence only and cannot support promotion, a strategy grade, holdout access, paper trading, or live trading.",
+  "data": {
+    "source_class": "legacy_public_adjusted_daily_prices",
+    "source_provider": "Yahoo Finance public chart endpoint (legacy local copy)",
+    "source_availability_status": "historical-vintage availability is unverified",
+    "corporate_action_status": "provider adjusted-close series; independent corporate-action reconciliation is unavailable",
+    "frequency": "1d",
+    "required_columns": [
+      "datetime",
+      "open",
+      "high",
+      "low",
+      "close",
+      "adjusted_close",
+      "volume"
+    ],
+    "universe": [
+      "EFA",
+      "GLD",
+      "IWM",
+      "QQQ",
+      "SPY",
+      "TLT"
+    ],
+    "included_start": "2015-08-03T00:00:00+00:00",
+    "included_end": "2018-12-31T23:59:59+00:00",
+    "excluded_from": "2019-01-01T00:00:00+00:00",
+    "decision_timestamp_convention": "A daily adjusted-close observation is assumed usable only after the regular session. This convention is not independently verified and is inadequate for evidence-grade point-in-time claims.",
+    "survivorship_note": "The fixed current ETF list is not a historical constituent reconstruction and may be survivorship-biased."
+  },
+  "candidate": {
+    "candidate_id": "h04-on-h01-252d-63d-tv12-cap150",
+    "family_ids": [
+      "H01",
+      "H04"
+    ],
+    "description": "H01 252-bar sign trend forecast with H04 63-bar realized-volatility transform, 12% annualized target, 42 minimum return observations, 0.00 minimum and 1.50 maximum exposure multiplier.",
+    "lookback_bars": 252,
+    "volatility_window_bars": 63,
+    "minimum_volatility_observations": 42,
+    "target_annualized_volatility": "0.12",
+    "annualization_observations": 252,
+    "minimum_exposure_multiplier": "0.00",
+    "maximum_exposure_multiplier": "1.50",
+    "rebalance_frequency_bars": 21,
+    "portfolio_weighting": "equal gross weight across the fixed six-instrument universe before each signal multiplier",
+    "shorting_assumption": "Synthetic short exposure is an analytic position only; borrow availability and short financing are not modelled."
+  },
+  "permanent_baselines": [
+    "equal_weight_buy_and_hold",
+    "trend_only_unscaled",
+    "cash_zero_exposure"
+  ],
+  "return_and_cost_convention": {
+    "return_timing": "A position decided after day t close earns the adjusted-close return from day t to t+1. This is a mark-to-market proxy, not a next-open execution simulation.",
+    "cost_scenarios_bps_per_one_way_turn": [
+      "0",
+      "5",
+      "15"
+    ],
+    "cost_limitations": "No historical bid/ask, quote size, market impact, participation, borrow, taxes, or option costs are available. Cost scenarios are sensitivity assumptions only."
+  },
+  "evaluation": {
+    "warm_up_bars": 252,
+    "fold_count": 4,
+    "bars_per_fold": 126,
+    "first_evaluation_bar_index": 252,
+    "unused_tail_bars": "Any post-fold tail is retained in the snapshot but excluded from the prototype report; it is not a holdout and it has no acceptance role.",
+    "metrics": [
+      "cumulative_return",
+      "annualized_return",
+      "annualized_volatility",
+      "maximum_drawdown",
+      "annualized_turnover",
+      "cost_scenario_return"
+    ],
+    "inference_boundary": "Metrics are descriptive falsification diagnostics. No significance test, alpha claim, Sharpe-ratio claim, promotion, or parameter selection is authorized."
+  },
+  "forbidden_actions": [
+    "options data retrieval or options strategy evaluation",
+    "candidate optimization or post-result parameter changes",
+    "comparison with or modification of the failed v1 campaign",
+    "new final-holdout creation, retrieval, or opening",
+    "candidate state transition beyond development",
+    "paper or live order creation"
+  ]
+}
