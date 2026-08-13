@@ -7,8 +7,8 @@
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](.github/workflows/quality.yml)
-[![Tests](https://img.shields.io/badge/tests-213%20passing-brightgreen)](tests)
-[![Coverage](https://img.shields.io/badge/coverage-90.18%25-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-225%20passing-brightgreen)](tests)
+[![Coverage](https://img.shields.io/badge/coverage-90.07%25-brightgreen)](tests)
 [![Engineering Grade](https://img.shields.io/badge/engineering%20grade-A%2B-blue)](docs/ENGINEERING_GRADE.md)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](pyproject.toml)
 [![Execution](https://img.shields.io/badge/execution-simulation%20only-blueviolet)](SAFETY.md)
@@ -62,7 +62,7 @@ The frozen [`qtpro-walk-forward-v1`](evaluation/protocol_v1.json) protocol was c
 
 The complete public evidence bundle includes all **2,016 validation trials**, **252 untouched test/cost trials**, **336 robustness trials**, fold selections, source checksums, gates, and deterministic hashes in [`evaluation/results/v1-preholdout/`](evaluation/results/v1-preholdout/). The full evaluation was executed independently twice; every core artifact was **byte-for-byte identical**. The readable [`research protocol`](docs/RESEARCH_PROTOCOL.md) and [`methodology`](docs/METHODOLOGY.md) explain the selection order, adjusted-close benchmark, cost model, start-date sensitivity, and lockbox boundary.
 
-The new strategy campaign is governed separately so it cannot retune or relabel the failed v1 result. [`STRATEGY_GOVERNANCE.md`](docs/STRATEGY_GOVERNANCE.md) freezes grade caps and holdout rules; the citation-validated [`STRATEGY_HYPOTHESES.md`](docs/STRATEGY_HYPOTHESES.md) defines twelve falsifiable equity and defined-risk options families, permanent baselines, point-in-time data needs, and candidate ceilings before any new experiment is preregistered. The provider-neutral [`DATA_CONTRACTS.md`](docs/DATA_CONTRACTS.md) specification and its 18 hash-pinned schemas define the causal, licensing, corporate-action, options-lifecycle, and snapshot evidence every future data adapter must satisfy. The new [`EXPERIMENT_LEDGER.md`](docs/EXPERIMENT_LEDGER.md) contract retains candidate registration, preregistration, every terminal attempt, comparison barriers, gate evidence, and one-time candidate-bound holdouts; it is a research-integrity control, not a performance claim. [`REFERENCE_INGESTION.md`](docs/REFERENCE_INGESTION.md) documents the implemented SEC, Treasury, local equity, corporate-action, and immutable snapshot adapters, including their strict publication-time and licensing boundaries.
+The new strategy campaign is governed separately so it cannot retune or relabel the failed v1 result. [`STRATEGY_GOVERNANCE.md`](docs/STRATEGY_GOVERNANCE.md) freezes grade caps and holdout rules; the citation-validated [`STRATEGY_HYPOTHESES.md`](docs/STRATEGY_HYPOTHESES.md) defines twelve falsifiable equity and defined-risk options families, permanent baselines, point-in-time data needs, and candidate ceilings before any new experiment is preregistered. The provider-neutral [`DATA_CONTRACTS.md`](docs/DATA_CONTRACTS.md) specification and its 18 hash-pinned schemas define the causal, licensing, corporate-action, options-lifecycle, and snapshot evidence every future data adapter must satisfy. The new [`EXPERIMENT_LEDGER.md`](docs/EXPERIMENT_LEDGER.md) contract retains candidate registration, preregistration, every terminal attempt, comparison barriers, gate evidence, and one-time candidate-bound holdouts; it is a research-integrity control, not a performance claim. [`REFERENCE_INGESTION.md`](docs/REFERENCE_INGESTION.md) documents the implemented SEC, Treasury, local equity, corporate-action, and immutable snapshot adapters, including their strict publication-time and licensing boundaries. [`FORECAST_SIGNALS.md`](docs/FORECAST_SIGNALS.md) specifies the new immutable time-series and cross-sectional forecast contracts, bounded volatility transform, frozen-universe guard, and permanent equal-weight, unscaled-trend, and cash comparators; it contains no new return result or activation path.
 
 > **Interpretation:** This is a successful falsification and reproducibility result, not evidence of an alpha edge. It does not authenticate the legacy project’s reported live history, prove future profitability, or authorize live capital. The earlier v0.1.0 single-SPY engineering run remains available in the [baseline release](https://github.com/5chm33/quantum-trader-pro/releases/tag/v0.1.0) for historical comparison, but it is not the headline strategy evaluation.
 
@@ -143,7 +143,7 @@ uv sync --locked --extra dev
 make quality
 ```
 
-The v0.2.0 baseline plus the public strategy-research branch currently has **213 passing tests** and **90.18% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. The public v0.2.0 release tag remains an immutable engineering baseline; these new checks do not alter its released strategy-evidence boundary.
+The v0.2.0 baseline plus the public strategy-research branch currently has **225 passing tests** and **90.07% branch coverage**, with no strict-type errors, Ruff findings, or Bandit findings. The public v0.2.0 release tag remains an immutable engineering baseline; these new checks do not alter its released strategy-evidence boundary.
 
 The suite includes every injected submission boundary, a literal subprocess `os._exit` followed by two fresh-process recoveries with exactly one fake external side effect, close/reopen recovery, partial fills, fill-during-cancel, timeout and non-success response classification, operator pause races, corrupt-path rejection, injected transaction rollback, and simulated `SQLITE_FULL` rollback plus clean recovery. The locked 43-package development graph had **zero known vulnerabilities** in the 2026-08-12 acceptance audit; protected CI re-audits it and retains a CycloneDX SBOM. All five external workflow references are pinned to immutable commit SHAs. Protected CI repeats the gate on Python 3.11 and 3.12 and validates the one-click launchers on Linux, macOS, and Windows.
 
@@ -162,7 +162,7 @@ The exact cloud commit, wheel checksum, rollback, `systemd` boundary, 2.1 harden
 | `tests/unit/` | Domain invariants and defensive-path coverage |
 | `tests/integration/` | Deterministic replay, broker reconciliation, operator actions, literal process termination, partial fills, cancel races, and crash recovery |
 | `tests/smoke/` | Installed CLI, artifact, and prohibited-mode checks |
-| `docs/` | Architecture, methodology, strategy governance, hypothesis evidence, immutable experiment ledger, point-in-time reference ingestion, failure injection, operator controls, legacy audit, deployment, and visual evidence |
+| `docs/` | Architecture, methodology, strategy governance, hypothesis evidence, immutable experiment ledger, point-in-time reference ingestion, forecast-signal contracts, failure injection, operator controls, legacy audit, deployment, and visual evidence |
 | `research/governance/` | Machine-enforced grade policy, baseline identities, frozen evidence checksums, and bounded hypothesis catalog |
 | `research/schemas/` | Eighteen provider-neutral point-in-time equity, event, volatility, options, rate, and immutable snapshot contracts plus a hash manifest |
 | `deployment/` | Hardened simulation-only systemd templates |
