@@ -62,7 +62,7 @@ Run the complete acceptance gate:
 make quality
 ```
 
-The final local acceptance suite reports **162 passing tests and 90.23% branch coverage**. It runs through the committed cross-platform dependency lock. The protected public workflow repeats formatting, lint, strict typing, branch coverage, source and locked-dependency security analysis, SBOM generation, evidence verification, package construction, installed-wheel preflight, and one-click launcher checks across Python 3.11, Python 3.12, Linux, macOS, and Windows.
+The latest local run of this branch's acceptance suite reports **164 passing tests and 90.28% branch coverage**. It runs through the committed cross-platform dependency lock. The protected public workflow repeats formatting, lint, strict typing, branch coverage, source and locked-dependency security analysis, SBOM generation, evidence verification, package construction, installed-wheel preflight, and one-click launcher checks across Python 3.11, Python 3.12, Linux, macOS, and Windows.
 
 ## Residual Risks and Required External Evidence
 

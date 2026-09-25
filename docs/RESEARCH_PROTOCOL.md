@@ -8,7 +8,9 @@
 
 ## Current Result
 
-The completed pre-holdout evaluation retained **2,604 trials** across six assets and 84 untouched base-cost folds. It **failed** the frozen gate: median base excess return was −2.27%, 15.48% of folds beat the adjusted-close benchmark, the worst test drawdown was −34.33%, and six cost scenarios triggered a risk halt. The complete evidence is published under [`evaluation/results/v1-preholdout/`](../evaluation/results/v1-preholdout/).
+The completed pre-holdout evaluation retained **2,604 trials** across six assets and 84 untouched base-cost folds. It **failed** the frozen gate: the reported median base strategy-minus-adjusted-close-proxy difference was −2.27%, 15.48% of folds had a price-only strategy return above the adjusted-close proxy, the worst test drawdown was −34.33%, and six cost scenarios triggered a risk halt. The complete evidence is published under [`evaluation/results/v1-preholdout/`](../evaluation/results/v1-preholdout/).
+
+> **Benchmark-methodology limitation:** Strategy equity in this protocol is marked from raw closes and does not apply dividends or other corporate actions. The frozen protocol's `excess_return_vs_total_return_proxy` field therefore subtracts an adjusted-close total-return proxy from a price-only strategy return; despite its retained field name, it is not an economically comparable excess-return measure. Raw-close buy-and-hold price return is the aligned comparison. The frozen values and failed-gate record are retained unchanged; correcting the economic comparison requires a newly versioned protocol and data-backed rerun.
 
 The final 252 observations for each asset remain unopened. Because the pre-holdout evidence failed, no holdout receipt or result exists, and the repository does not claim research acceptance.
 
@@ -19,7 +21,7 @@ The final 252 observations for each asset remain unopened. Because the pre-holdo
 | Observation interval | Daily |
 | Date range | August 2015 through July 2026 |
 | Assets | SPY, QQQ, IWM, EFA, TLT, and GLD |
-| Benchmark | Complete adjusted-close buy-and-hold total-return proxy for each asset |
+| Benchmark | Complete adjusted-close buy-and-hold total-return proxy for each asset (supplemental; see methodology limitation above) |
 | Rolling windows | 504 training bars, 126 validation bars, 126 untouched test bars, stepped by 126 bars |
 | Final lockbox | Last 252 observations, excluded from every earlier fold |
 | Candidate family | Fast windows 20/50/100, slow windows 100/200/250, invested fractions 50%/75%/95%, with fast strictly below slow |
@@ -39,7 +41,7 @@ The training block exists to establish sufficient history and strategy warm-up. 
 | 1 | Enumerate the complete candidate set deterministically. |
 | 2 | Run and retain every candidate on the validation block using only preceding training history for warm-up. |
 | 3 | Exclude candidates with a risk halt, pending final order, or drawdown below the declared floor. |
-| 4 | Rank eligible candidates by validation excess return versus the adjusted-close proxy. |
+| 4 | Rank eligible candidates by the retained validation strategy-minus-adjusted-close-proxy field. |
 | 5 | Resolve ties by lower absolute drawdown, lower turnover, and deterministic candidate ID. |
 | 6 | Freeze the winner, then evaluate the untouched test block and cost scenarios. |
 | 7 | Advance by 126 observations and repeat without revising the protocol. |
@@ -54,7 +56,7 @@ The holdout is not magically “pure”: researchers already know broad market h
 
 ## Promotion Gates
 
-The machine-readable gates are deliberately capable of failing. The aggregate pre-holdout result requires complete assets, at least eight folds per asset, nonnegative median base and 2× test excess return, at least 55% positive base asset-fold tests, median 5× excess no worse than −5%, no risk halts or pending orders, and no drawdown below −30%. The final holdout separately requires nonnegative median excess and at least half of assets positive.
+The machine-readable gates are deliberately capable of failing. The aggregate pre-holdout result requires complete assets, at least eight folds per asset, nonnegative median base and 2× retained strategy-minus-proxy fields, at least 55% positive base asset-fold fields, median 5× field no worse than −5%, no risk halts or pending orders, and no drawdown below −30%. The final holdout separately requires a nonnegative retained field and at least half of assets positive. These are frozen historical gates, not claims that the fields provide economically comparable excess returns.
 
 A failure is retained as a scientifically useful result. The repository must not lower a gate after observing an outcome under this protocol; a revised protocol requires a new version, rationale, and unexamined future data.
 

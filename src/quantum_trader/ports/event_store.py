@@ -1,4 +1,4 @@
-"""Append-only event-store contract for simulation audit trails."""
+"""Ordered event-store contract for simulation audit trails."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any, Protocol
 
 
 class EventStore(Protocol):
-    """Persist ordered immutable events without storing credentials."""
+    """Persist ordered events without storing credentials."""
 
     def append(
         self,
@@ -18,10 +18,10 @@ class EventStore(Protocol):
         correlation_id: str,
         payload: Mapping[str, Any],
     ) -> int:
-        """Append an event and return its monotonic sequence number."""
+        """Store an event and return its monotonic sequence number."""
 
     def iter_events(self) -> Iterator[dict[str, Any]]:
-        """Yield persisted events in sequence order."""
+        """Yield persisted events in sequence order, verifying any store-specific checksums."""
 
     def close(self) -> None:
         """Flush and close the event store."""

@@ -1,4 +1,4 @@
-"""Append-only SQLite event store with canonical payload integrity hashes."""
+"""Ordered SQLite event log with canonical payload checksums."""
 
 from __future__ import annotations
 
@@ -12,8 +12,12 @@ from pathlib import Path
 from typing import Any
 
 
+class EventPayloadIntegrityError(RuntimeError):
+    """Raised when an event payload does not match its stored checksum."""
+
+
 class SQLiteEventStore:
-    """Persist one simulation run as an ordered immutable event stream."""
+    """Persist one simulation run as an ordered event log with verified payload checksums."""
 
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path).expanduser().resolve()
@@ -58,14 +62,8 @@ class SQLiteEventStore:
             raise ValueError("stored event timestamps must be timezone-aware")
         if not event_type.strip() or not correlation_id.strip():
             raise ValueError("event_type and correlation_id must not be empty")
-        payload_json = json.dumps(
-            dict(payload),
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=True,
-            default=self._json_default,
-        )
-        payload_sha256 = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
+        payload_json = self._canonical_payload_json(payload)
+        payload_sha256 = self._payload_sha256(payload_json)
         cursor = connection.execute(
             """
             INSERT INTO events(event_type, timestamp, correlation_id, payload_json, payload_sha256)
@@ -94,13 +92,21 @@ class SQLiteEventStore:
             """
         )
         for row in rows:
+            payload_json = str(row["payload_json"])
+            expected_payload_sha256 = str(row["payload_sha256"])
+            actual_payload_sha256 = self._payload_sha256(payload_json)
+            if actual_payload_sha256 != expected_payload_sha256:
+                sequence = int(row["sequence"])
+                raise EventPayloadIntegrityError(
+                    f"event {sequence} payload checksum does not match persisted payload"
+                )
             yield {
                 "sequence": int(row["sequence"]),
                 "event_type": str(row["event_type"]),
                 "timestamp": str(row["timestamp"]),
                 "correlation_id": str(row["correlation_id"]),
-                "payload": json.loads(str(row["payload_json"])),
-                "payload_sha256": str(row["payload_sha256"]),
+                "payload": json.loads(payload_json),
+                "payload_sha256": expected_payload_sha256,
             }
 
     def close(self) -> None:
@@ -113,6 +119,20 @@ class SQLiteEventStore:
         if self._connection is None:
             raise RuntimeError("event store is closed")
         return self._connection
+
+    @staticmethod
+    def _canonical_payload_json(payload: Mapping[str, Any]) -> str:
+        return json.dumps(
+            dict(payload),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            default=SQLiteEventStore._json_default,
+        )
+
+    @staticmethod
+    def _payload_sha256(payload_json: str) -> str:
+        return hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
 
     @staticmethod
     def _json_default(value: object) -> str:

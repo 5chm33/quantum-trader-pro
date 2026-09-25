@@ -8,10 +8,10 @@ The preregistered `qtpro-walk-forward-v1` protocol **failed its pre-holdout prom
 |---|---:|---:|---|
 | Assets with at least eight folds | 6 of 6 | 6 of 6 | Pass |
 | Base-cost out-of-sample folds | 84 | At least 48 | Pass |
-| Median base excess return | −2.27% | At least 0% | Fail |
-| Folds beating adjusted-close benchmark | 15.48% | At least 55% | Fail |
-| Median 2×-cost excess return | −2.28% | At least 0% | Fail |
-| Median 5×-cost excess return | −2.34% | At least −5% | Pass |
+| Median base strategy-minus-adjusted-close-proxy field | −2.27% | At least 0% | Fail |
+| Folds with price-only strategy return above adjusted-close proxy | 15.48% | At least 55% | Fail |
+| Median 2×-cost strategy-minus-adjusted-close-proxy field | −2.28% | At least 0% | Fail |
+| Median 5×-cost strategy-minus-adjusted-close-proxy field | −2.34% | At least −5% | Pass |
 | Worst test drawdown | −34.33% | No worse than −30% | Fail |
 | Risk-halted cost scenarios | 6 | 0 | Fail |
 | Pending final orders | 0 | 0 | Pass |
@@ -26,6 +26,8 @@ The preregistered `qtpro-walk-forward-v1` protocol **failed its pre-holdout prom
 The engine retained **2,604 deterministic trials**: 2,016 validation candidates, 252 untouched out-of-sample cost scenarios, and 336 execution-buffer/start-offset robustness trials. The panel contains SPY, QQQ, IWM, EFA, TLT, and GLD daily observations from August 2015 through July 2026. Selection used validation results only; the selected specification was then replayed on the following untouched 126-bar block.
 
 The complete run was executed twice independently. Every published core artifact was byte-identical across the two runs. `SHA256SUMS` records the retained digests.
+
+> **Benchmark-methodology limitation:** Strategy equity is marked from raw closes and does not apply dividends or other corporate actions. The retained `excess_return_vs_total_return_proxy` field subtracts an adjusted-close buy-and-hold total-return proxy from that price-only strategy return, so it is not an economically comparable excess-return measure despite its historical field name. The values, frozen gate, and retained artifacts are unchanged. A corrected total-return comparison requires a newly versioned protocol and data-backed rerun; raw-close buy-and-hold price return is the aligned comparison for this implementation.
 
 ## Artifact Index
 

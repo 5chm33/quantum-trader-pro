@@ -8,8 +8,8 @@ Quantum Trader Pro is designed to make an incorrect trading claim difficult to h
 |---|---|
 | v0.1.0 retained SPY run | Reproducible engineering baseline with a price-only benchmark; not out-of-sample alpha evidence |
 | A+ methodology branch | Adjusted-close benchmark support, conservative buy sizing, post-fill checks, flat-to-flat attribution, and explicit end-state handling implemented and tested |
-| Walk-forward evaluation | Specified for the next phase; no result may be promoted before locked-window acceptance |
-| Paper brokerage | Not yet implemented; simulation remains the only executable mode |
+| Walk-forward evaluation | Pre-holdout evaluation completed and failed its frozen promotion gate; the final holdout remains unopened |
+| Paper brokerage | Internal paper contracts are implemented but not operator-enabled; simulation remains the only executable mode |
 | Live capital | Disabled and outside the current acceptance boundary |
 
 ## Input Data Contract
@@ -24,6 +24,13 @@ An optional `adjusted_close` column is accepted only as a complete all-or-none s
 | Raw next open | Causal simulated execution reference |
 | Adjusted close | Headline buy-and-hold total-return proxy when complete |
 | Fabricated or forward-filled benchmark | Prohibited |
+
+The portfolio itself is marked from raw closes and does not apply cash dividends, splits, or other
+corporate actions. Therefore the raw-close buy-and-hold price return is the economically aligned
+comparison. When available, the adjusted-close total-return proxy remains a supplemental
+diagnostic, but its difference from the price-only strategy return is **not** an economically
+comparable excess-return measure. The frozen v1 evidence retains its existing reported values;
+this disclosure does not recalculate or reinterpret them as total-return strategy results.
 
 ## Strategy
 
@@ -109,9 +116,20 @@ The public baseline retains its original five-year SPY result because removing a
 
 This card is historical baseline evidence, not the A+ acceptance result. It underperformed an already-generous price-only benchmark and did not use a locked holdout, walk-forward parameter selection, cost grid, parameter perturbation, or multi-asset protocol. Phase six replaces it only after those rules are preregistered and executed.
 
-## Reproducibility
+## Event-Log Integrity and Reproducibility
 
-A run’s source digest, canonical configuration, deterministic identifiers, injected replay clock, ordered SQLite ledger, payload hashes, and finite artifacts support byte-for-byte reruns. The current output set is `simulation_report.json`, `simulation_report.md`, `equity_curve.csv`, `fills.csv`, `round_trip_trades.csv`, and `events.sqlite3`.
+A run’s source digest, canonical configuration, deterministic identifiers, injected replay clock,
+ordered SQLite event log, read-time payload checksum verification, and finite artifacts support
+byte-for-byte reruns. The current output set is `simulation_report.json`,
+`simulation_report.md`, `equity_curve.csv`, `fills.csv`, `round_trip_trades.csv`, and
+`events.sqlite3`.
+
+Each event stores canonical JSON and its SHA-256 checksum; the event reader recomputes and rejects
+a payload/checksum mismatch. This detects a stored payload changed without a matching checksum, but
+the SQLite file is not append-only or immutable and the checksums are neither chained, signed, nor
+externally anchored. An actor who can rewrite the database can also rewrite or delete rows and their
+checksums. The event log must not be described as cryptographically traceable, tamper-proof, or
+cryptographically tamper-evident.
 
 The repository does not ship downloaded market data as performance evidence. A reviewer must obtain appropriately licensed data, preserve its checksum, and disclose any provider revision before claiming reproduction.
 
