@@ -227,9 +227,12 @@ def write_report(result: SimulationResult, output_dir: str | Path) -> dict[str, 
     destination.mkdir(parents=True, exist_ok=True)
     metrics = calculate_metrics(result)
     benchmark_description = (
-        "unavailable because adjusted_close was not supplied; raw close price return is secondary"
+        "unavailable because adjusted_close was not supplied; raw-close price return is the "
+        "economically aligned comparison for the price-only portfolio accounting"
         if not result.benchmark_prices
-        else "adjusted-close buy-and-hold total-return proxy; raw price return is secondary"
+        else "adjusted-close buy-and-hold total-return proxy; the strategy is marked from raw "
+        "closes without dividends or corporate actions, so raw-close price return is the "
+        "economically aligned comparison and the total-return proxy is supplemental"
     )
     payload = {
         "methodology": {
@@ -478,7 +481,7 @@ def _markdown_report(payload: dict[str, Any]) -> str:
         ),
         ("Buy-and-hold price return", _percent(metrics["buy_and_hold_price_return"])),
         (
-            "Excess versus total-return proxy",
+            "Difference versus total-return proxy (not economically comparable)",
             _percent(metrics["excess_return_vs_total_return_proxy"]),
         ),
         ("Maximum drawdown", _percent(metrics["maximum_drawdown"])),
@@ -518,10 +521,13 @@ def _markdown_report(payload: dict[str, Any]) -> str:
             "fill at the next eligible event open with the declared fees and slippage. Pending "
             "orders are canceled at the final observation; open positions are marked to the final "
             "close rather than liquidated at a fabricated price. Round-trip statistics group all "
-            "fills from flat to flat. The headline benchmark is available only when every row "
-            "supplies adjusted_close; raw close return remains a secondary price diagnostic. "
+            "fills from flat to flat. Strategy equity is marked from raw closes and does not "
+            "apply dividends or other corporate actions, so raw-close buy-and-hold price return "
+            "is the economically aligned comparison. An adjusted-close buy-and-hold total-return "
+            "proxy is shown only when every row supplies adjusted_close; it is supplemental and "
+            "its difference from the price-only strategy return is not economically comparable. "
             "Every decision, order, cancellation, fill, and equity point is retained in the "
-            "ledger.",
+            "ordered SQLite event log with read-time payload-checksum verification.",
             "",
             f"**Sharpe assumptions:** {metrics['sharpe_method']}",
             "",

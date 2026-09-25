@@ -2,7 +2,7 @@
 
 # Quantum Trader Pro
 
-**A deterministic, simulation-only trading research engine with fail-closed risk controls, next-event execution modeling, and a cryptographically traceable event ledger.**
+**A deterministic, simulation-only trading research engine with fail-closed risk controls, next-event execution modeling, and an ordered SQLite event log with verified payload checksums.**
 
 *Originally built as a first algorithmic-trading project, then reconstructed into a safe, reproducible portfolio-grade engineering system.*
 
@@ -20,7 +20,7 @@
 
 ## What It Does
 
-Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and append-only event recording. Every generated report is derived from the same ordered observations and declares its fees, slippage, conservative execution buffer, benchmark availability, end-of-test policy, and fill methodology.
+Quantum Trader Pro replays a local OHLCV dataset through an explicit sequence of market-data validation, deterministic signal generation, target-position construction, fail-closed risk review, next-event simulated execution, reconciled portfolio accounting, and ordered event recording. Every generated report is derived from the same ordered observations and declares its fees, slippage, conservative execution buffer, benchmark availability, end-of-test policy, and fill methodology.
 
 The repository now contains a **fixed-sandbox Alpaca paper adapter, transactional journals, full-state reconciler, fail-closed pre-trade controls, strict out-of-band credential loader, and default-paused operator-control store**, but none is exposed through an operator command. One-use HMAC approvals bind resume and cancel actions to the exact code, configuration, account, namespace, action, nonce, and expiry. The cancel kill switch pauses first, touches only deterministic bot-owned paper orders, verifies terminal and residual state, reconciles, and remains paused. Every executable command still accepts only `simulation`; authenticated paper acceptance and position flattening remain absent, and the live gate always rejects. This remains a portfolio and research-engineering project, not an autonomous capital-deployment system.
 
@@ -32,10 +32,12 @@ The repository now contains a **fixed-sandbox Alpaca paper adapter, transactiona
 | Emergency behavior | New exposure is blocked while a recorded target-to-cash override remains permitted |
 | Execution | Orders fill only at the next eligible event open with declared fees and slippage |
 | Accounting | Cash, holdings, average cost, realized P&L, unrealized P&L, fees, and equity reconcile on every event |
-| Auditability | Ordered SQLite event ledger with canonical JSON payload hashes |
-| Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with total-return-proxy availability, price diagnostics, exposure, turnover, drawdown, expectancy, and risk state |
+| Auditability | Ordered SQLite event log with canonical JSON payload checksums verified on reads |
+| Reporting | JSON, Markdown, equity, fill, and flat-to-flat trade CSVs with raw-price comparison, supplemental total-return-proxy availability, exposure, turnover, drawdown, expectancy, and risk state |
 | Process safety | Single-instance lock and explicit output-overwrite protection |
 | Broker boundary | Expiring paper arming; fixed paper origin; pre-submit journal; exclusive attempt claim; no-blind-retry recovery; reconciliation; market and portfolio gates; strict credential files; default pause; one-use resume/cancel approvals; owned-orders-only verified cancel; no operator-enabled paper command, flatten service, or live adapter |
+
+Payload checksums make an accidental or unsophisticated payload/hash mismatch detectable when the log is read. They do **not** make the local SQLite file append-only, immutable, signed, externally anchored, or cryptographically tamper-evident: an actor able to rewrite the database can delete or alter rows and their checksums. The log is therefore audit metadata, not a tamper-proof ledger.
 
 ---
 
@@ -48,10 +50,10 @@ The frozen [`qtpro-walk-forward-v1`](evaluation/protocol_v1.json) protocol was c
 | Assets | SPY, QQQ, IWM, EFA, TLT, GLD | All six complete | Pass |
 | Retained trials | 2,604 | Retain every attempt | Pass |
 | Untouched base-cost test folds | 84 | At least 48 | Pass |
-| Median base excess return | **−2.27%** | At least 0% | **Fail** |
-| Folds beating adjusted-close benchmark | **15.48%** | At least 55% | **Fail** |
-| Median 2×-cost excess return | **−2.28%** | At least 0% | **Fail** |
-| Median 5×-cost excess return | −2.34% | At least −5% | Pass |
+| Median base strategy-minus-adjusted-close-proxy field | **−2.27%** | At least 0% | **Fail** |
+| Folds with price-only strategy return above adjusted-close proxy | **15.48%** | At least 55% | **Fail** |
+| Median 2×-cost strategy-minus-adjusted-close-proxy field | **−2.28%** | At least 0% | **Fail** |
+| Median 5×-cost strategy-minus-adjusted-close-proxy field | −2.34% | At least −5% | Pass |
 | Worst test drawdown | **−34.33%** | No worse than −30% | **Fail** |
 | Risk-halted cost scenarios | **6** | 0 | **Fail** |
 | Final holdout | **Locked** | Open only after satisfactory pre-holdout evidence | Preserved |
@@ -61,6 +63,8 @@ The frozen [`qtpro-walk-forward-v1`](evaluation/protocol_v1.json) protocol was c
 ![Walk-forward robustness diagnostics](docs/assets/walk_forward_robustness.png)
 
 The complete public evidence bundle includes all **2,016 validation trials**, **252 untouched test/cost trials**, **336 robustness trials**, fold selections, source checksums, gates, and deterministic hashes in [`evaluation/results/v1-preholdout/`](evaluation/results/v1-preholdout/). The full evaluation was executed independently twice; every core artifact was **byte-for-byte identical**. The readable [`research protocol`](docs/RESEARCH_PROTOCOL.md) and [`methodology`](docs/METHODOLOGY.md) explain the selection order, adjusted-close benchmark, cost model, start-date sensitivity, and lockbox boundary.
+
+> **Benchmark basis:** Strategy equity is marked from raw closes and does not apply dividends or other corporate actions. Raw-close buy-and-hold price return is the economically aligned comparison. The adjusted-close buy-and-hold total-return proxy is retained as a supplemental diagnostic; its reported difference from the price-only strategy return is not an economically comparable excess-return measure.
 
 > **Interpretation:** This is a successful falsification and reproducibility result, not evidence of an alpha edge. It does not authenticate the legacy project’s reported live history, prove future profitability, or authorize live capital. The earlier v0.1.0 single-SPY engineering run remains available in the [baseline release](https://github.com/5chm33/quantum-trader-pro/releases/tag/v0.1.0) for historical comparison, but it is not the headline strategy evaluation.
 
@@ -120,14 +124,14 @@ The CLI refuses to overwrite an existing event ledger or report set unless `--ov
 
 | Artifact | Purpose |
 |---|---|
-| `events.sqlite3` | Ordered decision-to-fill ledger with canonical payload hashes |
+| `events.sqlite3` | Ordered decision-to-fill event log with canonical payload checksums verified on reads; not an immutable ledger |
 | `simulation_report.json` | Machine-readable configuration, methodology, metrics, and final state |
 | `simulation_report.md` | Human-readable evaluation card and methodology disclosure |
 | `equity_curve.csv` | Timestamped reconciled cash, market value, equity, P&L, and fees |
 | `fills.csv` | Simulated fill IDs, side, quantity, price, fees, slippage, and notional |
 | `round_trip_trades.csv` | Flat-to-flat trade attribution with entry/exit notional, fees, realized P&L, duration, and return |
 
-The report embeds the input checksum through the source identifier and adds a metrics checksum. Repeating the same code, source bytes, and configuration produces the same core artifacts.
+The report embeds the input checksum through the source identifier and adds a metrics checksum. Repeating the same code, source bytes, and configuration produces the same core artifacts. Checksums are local consistency metadata, not proof that an artifact has never been rewritten.
 
 ---
 

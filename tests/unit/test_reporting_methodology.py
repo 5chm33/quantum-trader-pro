@@ -114,6 +114,24 @@ def test_adjusted_close_is_headline_benchmark_when_complete() -> None:
     assert metrics["excess_return_vs_total_return_proxy"] == pytest.approx(-0.20)
 
 
+def test_report_discloses_raw_price_accounting_is_not_comparable_to_total_return_proxy(
+    tmp_path: Path,
+) -> None:
+    simulation = result(
+        points=(equity(1, "1000"), equity(2, "1050")),
+        prices=(Decimal("100"), Decimal("110")),
+        benchmark_prices=(Decimal("80"), Decimal("100")),
+    )
+
+    paths = write_report(simulation, tmp_path)
+    payload = paths["json"].read_text(encoding="utf-8")
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+
+    assert "economically aligned comparison" in payload
+    assert "not economically comparable" in markdown
+    assert "does not apply dividends or other corporate actions" in markdown
+
+
 def test_round_trip_attribution_groups_partial_fills_and_writes_trade_csv(
     tmp_path: Path,
 ) -> None:

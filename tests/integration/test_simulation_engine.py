@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -9,7 +11,7 @@ import pytest
 
 from quantum_trader.adapters.csv_replay import CsvReplayMarketData
 from quantum_trader.adapters.simulated_broker import SimulatedBroker
-from quantum_trader.adapters.sqlite_store import SQLiteEventStore
+from quantum_trader.adapters.sqlite_store import EventPayloadIntegrityError, SQLiteEventStore
 from quantum_trader.application.engine import SimulationEngine
 from quantum_trader.application.reporting import calculate_metrics, write_report
 from quantum_trader.config import SimulationConfig
@@ -192,3 +194,29 @@ def test_final_bar_order_is_canceled_and_recorded(tmp_path: Path) -> None:
     assert (
         completed["payload"]["end_of_test_policy"] == "cancel_pending_mark_positions_to_final_close"
     )
+
+
+def test_reading_rejects_a_payload_that_no_longer_matches_its_checksum(tmp_path: Path) -> None:
+    path = tmp_path / "events.sqlite3"
+    store = SQLiteEventStore(path)
+    try:
+        store.append(
+            event_type="fixture",
+            timestamp=datetime(2024, 1, 1, tzinfo=UTC),
+            correlation_id="fixture-correlation",
+            payload={"state": "original"},
+        )
+    finally:
+        store.close()
+
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE events SET payload_json = ? WHERE sequence = 1", ('{"state":"changed"}',)
+        )
+
+    reopened = SQLiteEventStore(path)
+    try:
+        with pytest.raises(EventPayloadIntegrityError, match="event 1 payload checksum"):
+            list(reopened.iter_events())
+    finally:
+        reopened.close()
